@@ -263,7 +263,13 @@ async function init() {
   state.units = (await response.json()).units;
   window.addEventListener('hashchange', () => render());
   render();
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  if (!('serviceWorker' in navigator)) return;
+  // 新しい版に入れ替わったら1回だけ読み直す。初めて入れたときは読み直さない
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) location.reload();
+  });
+  navigator.serviceWorker.register('sw.js');
 }
 
 init();

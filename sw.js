@@ -1,5 +1,5 @@
 // コードやデータを更新したら必ず番号を上げる（上げ忘れると端末に古い版が残る）
-const CACHE_NAME = 'jazz-theory-v9';
+const CACHE_NAME = 'jazz-theory-v10';
 const PRECACHE = [
   './',
   'index.html',
@@ -17,7 +17,8 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE)));
+  // ブラウザが前に読んだ古いファイルを使い回さないよう、サーバーから取り直して保存する
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE.map((url) => new Request(url, { cache: 'reload' })))));
   self.skipWaiting();
 });
 
@@ -31,7 +32,8 @@ self.addEventListener('activate', (event) => {
 
 async function networkFirst(request) {
   try {
-    const response = await fetch(request);
+    // GitHub Pagesは10分間の使い回しを許すので、毎回サーバーに新しいか確かめる
+    const response = await fetch(request, { cache: 'no-cache' });
     const cache = await caches.open(CACHE_NAME);
     cache.put(request, response.clone());
     return response;
