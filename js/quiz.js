@@ -868,9 +868,188 @@ const masterGenerators = {
   }
 };
 
+// 1音ずつ、前の音より高く1オクターブ以内になるよう積む（ヴォイシングを下から順に並べるため）
+function stackUp(notes) {
+  return notes.reduce((result, note) => {
+    if (result.length === 0) return [note];
+    const previous = noteToMidi(result.at(-1));
+    let x = { ...note };
+    while (noteToMidi(x) <= previous) x = { ...x, octave: x.octave + 1 };
+    while (noteToMidi(x) - previous > 12) x = { ...x, octave: x.octave - 1 };
+    return [...result, x];
+  }, []);
+}
+
+// ルートレス・ヴォイシングの4音。7のコードは5度の代わりに13thを使う
+const ROOTLESS = { maj7: ['M3', 'P5', 'M7', 'M9'], m7: ['m3', 'P5', 'm7', 'M9'], 7: ['M3', 'M13', 'm7', 'M9'] };
+const rotate = (list, k) => [...list.slice(k), ...list.slice(0, k)];
+
+function rootless(chord, form) {
+  const tones = ROOTLESS[chord.quality].map((x) => addInterval(chord.root, x));
+  return stackUp(form === 'A' ? tones : rotate(tones, 2));
+}
+
+// コードとスケールごとのトライアド・ペア（ルートからの音程。nullはルート）
+const TRIAD_PAIRS = [
+  { quality: 'm7', scale: 'ドリアン', intervals: ['m3', 'P4'] },
+  { quality: 'maj7', scale: 'リディアン', intervals: [null, 'M2'] },
+  { quality: '7', scale: 'オルタード', intervals: ['d5', 'm6'] }
+];
+const pairTriads = (root, intervals) => intervals.map((x) => makeChord(x ? addInterval(root, x) : root, ''));
+const pairLabel = (triads) => triads.map(c).join(' と ');
+
+// 同主短調から借りるコード（キーからの音程とコードの種類）と、もとのダイアトニック・コード
+const BORROWED = [
+  { roman: '♭IIImaj7', borrowed: ['m3', 'maj7'], diatonic: ['M3', 'm7'] },
+  { roman: '♭VImaj7', borrowed: ['m6', 'maj7'], diatonic: ['M6', 'm7'] },
+  { roman: '♭VII7', borrowed: ['m7', '7'], diatonic: ['M7', 'm7b5'] },
+  { roman: 'IVm7', borrowed: ['P4', 'm7'], diatonic: ['P4', 'maj7'] },
+  { roman: 'IIm7♭5', borrowed: ['M2', 'm7b5'], diatonic: ['M2', 'm7'] }
+];
+
+// 狙う音を、上はスケールの隣の音、下は半音下の音ではさむ
+function enclosure(roots, qualities) {
+  const chord = randomChord(roots, qualities);
+  const target = fitRange(chordNotes(chord)[pick([1, 2])]);
+  const step = modeScale(chord.root, SCALE_FOR[chord.quality]).find((x) => x.letter === (target.letter + 1) % 7);
+  const above = transpose(target, 1, (noteToMidi(step) - noteToMidi(target) + 12) % 12);
+  // 狙う音に♯がつくと半音下が♯♯になるので、そのときは同じ文字のナチュラルで書く
+  const below = [transpose(target, -1, -1), transpose(target, 0, -1)].find(isPlain);
+  return { chord, target, above, below, columns: [chordColumn(chord), ...[above, below, target].map(single)] };
+}
+
+// メロディの下に残り3つのコードの音をすき間なく並べ、いちばん下にメロディをオクターブ下で重ねる
+function blockVoicing(roots, qualities) {
+  const chord = randomChord(roots, qualities);
+  const tones = chordNotes(chord);
+  const k = Math.floor(Math.random() * 4);
+  const melody = { ...tones[k], octave: tones[k].octave + 1 };
+  const inner = [1, 2, 3].map((i) => tones[(k - i + 4) % 4]).map((x) => {
+    let y = { ...x };
+    while (noteToMidi(y) >= noteToMidi(melody)) y = { ...y, octave: y.octave - 1 };
+    while (noteToMidi(melody) - noteToMidi(y) > 12) y = { ...y, octave: y.octave + 1 };
+    return y;
+  });
+  const double = { ...melody, octave: melody.octave - 1 };
+  return { chord, melody, inner, notes: [double, ...[...inner].reverse(), melody] };
+}
+
+const secretGenerators = {
+  rootlessForm({ roots, qualities }) {
+    const chord = randomChord(roots, qualities);
+    const form = pick(['A', 'B']);
+    const voicing = rootless(chord, form);
+    const wrong = [rootless(chord, form === 'A' ? 'B' : 'A'), stackUp(chordNotes(chord)), stackUp(rotate(ROOTLESS[chord.quality].map((x) => addInterval(chord.root, x)), 1))];
+    return makeQuestion({
+      prompt: `${c(chord)} の${form}型ルートレス・ヴォイシングは？（下から）`, correct: spell(voicing), wrong: wrong.map(spell),
+      explain: `${form === 'A' ? '3度' : '7度'}から積み、ルートを省いて9thを入れます${chord.quality === '7' ? '（7のコードは5度の代わりに13th）' : ''}：${spell(voicing)}`,
+      columns: [{ notes: voicing, chord }]
+    });
+  },
+  rootlessMove({ keys }) {
+    const [two, five] = twoFiveOne(keyRoot(keys));
+    const a = rootless(two, 'A');
+    // キーによってルートのオクターブが違うので、Vの和音をIIの和音と同じ高さにそろえる
+    const raw = rootless(five, 'B');
+    const shift = Math.round((noteToMidi(a[0]) - noteToMidi(raw[0])) / 12);
+    const b = raw.map((x) => ({ ...x, octave: x.octave + shift }));
+    const pairs = a.map((x, i) => [x, b[i]]);
+    const moving = pairs.find(([x, y]) => noteToMidi(x) !== noteToMidi(y));
+    const wrong = pairs.filter((p) => p !== moving).map(([x]) => `${n(x)} → ${n(transpose(x, -1, -2))}`);
+    return makeQuestion({
+      prompt: `${c(two)}（A型）→ ${c(five)}（B型）。動く音は1つだけ。どれ？`, correct: `${n(moving[0])} → ${n(moving[1])}`, wrong,
+      explain: `${spell(a)} → ${spell(b)}。${c(two)} の7度が半音下がって ${c(five)} の3度になり、ほかの3音はそのまま残ります。`,
+      columns: [{ notes: a, chord: two }, { notes: b, chord: five }]
+    });
+  },
+  triadPair({ roots }) {
+    const entry = pick(TRIAD_PAIRS);
+    const chord = makeChord(parseNote(pick(roots)), entry.quality);
+    const triads = pairTriads(chord.root, entry.intervals);
+    const others = [...TRIAD_PAIRS.filter((x) => x !== entry).map((x) => x.intervals), ['P5', 'M6']];
+    return makeQuestion({
+      prompt: `${c(chord)}（${entry.scale}）で使うトライアド・ペアは？`, correct: pairLabel(triads),
+      wrong: others.map((x) => pairLabel(pairTriads(chord.root, x))),
+      explain: `${triads.map((t) => `${c(t)}（${spell(chordNotes(t))}）`).join('と')}。音の重ならない2つの三和音の6音が、すべて${entry.scale}の音です。`,
+      columns: [chordColumn(chord), ...triads.map(chordColumn)]
+    });
+  },
+  triadPairScale({ roots }) {
+    const entry = pick(TRIAD_PAIRS);
+    const chord = makeChord(parseNote(pick(roots)), entry.quality);
+    const triads = pairTriads(chord.root, entry.intervals);
+    return makeQuestion({
+      prompt: `${c(chord)} の上で ${pairLabel(triads)} を交互に弾く。どのスケールの響き？`, correct: entry.scale,
+      wrong: ['ドリアン', 'リディアン', 'オルタード', 'ミクソリディアン'].filter((x) => x !== entry.scale).slice(0, 3),
+      explain: `${spell(triads.flatMap(chordNotes))}。${c(chord)} から見ると${entry.scale}の音です。`,
+      columns: [chordColumn(chord), ...triads.map(chordColumn)]
+    });
+  },
+  enclosureTarget({ roots, qualities }) {
+    const { chord, target, above, below, columns } = enclosure(roots, qualities);
+    return makeQuestion({
+      prompt: `${c(chord)} で ${n(above)}・${n(below)} と弾いた。はさまれて狙われている音は？`, correct: n(target),
+      wrong: distinctWrong([above, below, ...chordNotes(chord)], target, 3).map(n),
+      explain: `上の ${n(above)}（スケールの音）と下の ${n(below)}（半音下）で ${n(target)} をはさむのがエンクロージャー。狙った音が強く聴こえます。`,
+      columns
+    });
+  },
+  enclosureBelow({ roots, qualities }) {
+    const { chord, target, above, below, columns } = enclosure(roots, qualities);
+    return makeQuestion({
+      prompt: `${c(chord)} の ${n(target)} をエンクロージャーで狙う。上は ${n(above)}。下からはさむ音は？`, correct: n(below),
+      wrong: distinctWrong([transpose(target, -1, -2), above, target, transpose(target, -2, -3)], below, 3).map(n),
+      explain: `下は半音下の ${n(below)}。${n(above)} → ${n(below)} → ${n(target)} と進みます。`,
+      columns
+    });
+  },
+  borrowedChord({ keys }) {
+    const key = keyRoot(keys);
+    const entry = pick(BORROWED);
+    const answer = fromKey(key, entry.borrowed);
+    const candidates = [fromKey(key, entry.diatonic), ...['maj7', '7', 'm7'].map((q) => makeChord(answer.root, q))].map(c);
+    const wrong = [...new Set(candidates)].filter((x) => x !== c(answer)).slice(0, 3);
+    return makeQuestion({
+      prompt: `キー ${n(key)} のメジャーで、同主短調（${n(key)} マイナー）から借りた ${entry.roman} は？`, correct: c(answer), wrong,
+      explain: `${n(key)} マイナーのダイアトニック・コードを借りています。ふつうは ${c(fromKey(key, entry.diatonic))} の場所に、一瞬かげりがさします。`,
+      columns: [chordColumn(answer)]
+    });
+  },
+  borrowedRoman({ keys }) {
+    const key = keyRoot(keys);
+    const entry = pick(BORROWED);
+    const answer = fromKey(key, entry.borrowed);
+    return makeQuestion({
+      prompt: `キー ${n(key)} の曲に ${c(answer)} が出てきた。同主短調から借りた何のコード？`, correct: entry.roman,
+      wrong: shuffle(BORROWED.filter((x) => x !== entry)).slice(0, 3).map((x) => x.roman),
+      explain: `${c(answer)} はキー ${n(key)} の ${entry.roman}。${n(key)} マイナーから借りたコードです。`,
+      columns: [chordColumn(fromKey(key, [null, 'maj7'])), chordColumn(answer)]
+    });
+  },
+  blockInner({ roots, qualities }) {
+    const { chord, melody, inner, notes } = blockVoicing(roots, qualities);
+    return makeQuestion({
+      prompt: `メロディ ${n(melody)} に ${c(chord)} のブロック・コードをつける。メロディのすぐ下の音は？`, correct: n(inner[0]),
+      wrong: distinctWrong([inner[1], inner[2], melody], inner[0], 3).map(n),
+      explain: `上から ${spell([...notes].reverse())}。メロディの下にコードの音をすき間なく並べ、いちばん下でメロディを重ねます。`,
+      columns: [{ notes, chord }]
+    });
+  },
+  blockBottom({ roots, qualities }) {
+    const { chord, melody, inner, notes } = blockVoicing(roots, qualities);
+    return makeQuestion({
+      prompt: `メロディ ${n(melody)} に ${c(chord)} のブロック・コード。いちばん下で鳴らす音は？`, correct: n(notes[0]),
+      wrong: distinctWrong(inner, melody, 3).map(n),
+      explain: `いちばん下はメロディと同じ ${n(melody)} を1オクターブ下で。メロディが太く聴こえます：${spell(notes)}`,
+      columns: [{ notes, chord }]
+    });
+  }
+};
+
 const GENERATORS = {
   ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators, ...developGenerators,
-  ...applyGenerators, ...masteryGenerators, ...masterGenerators
+  ...applyGenerators, ...masteryGenerators, ...masterGenerators,
+  ...secretGenerators
 };
 
 // 単元に複数の出題形式があるときは、偏らないよう順番に混ぜてからシャッフルする
