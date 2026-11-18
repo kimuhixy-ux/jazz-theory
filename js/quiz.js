@@ -1,6 +1,6 @@
 import {
   INTERVALS, QUALITIES, DIATONIC, MODES, NOTATIONS, parseNote, noteToText, noteToMidi, chordToText, chordNotes,
-  addInterval, transpose, placeRoot, majorScale, modeScale, makeChord, twoFiveOne, minorTwoFiveOne, toWritten
+  addInterval, transpose, placeRoot, diatonicIndex, majorScale, modeScale, makeChord, twoFiveOne, minorTwoFiveOne, toWritten
 } from './theory.js';
 
 const DEGREE_NAMES = ['ルート', '3度', '5度', '7度'];
@@ -188,7 +188,7 @@ const readGenerators = {
 
 const TENSIONS = { maj7: ['M9', 'A11', 'M13'], 7: ['M9', 'm9', 'A9', 'M13'], m7: ['M9', 'P11'] };
 const SCALE_FOR = { maj7: 'ionian', m7: 'dorian', 7: 'mixolydian', m7b5: 'locrian' };
-const QUALITY_FOR_MODE = { ionian: 'maj7', dorian: 'm7', mixolydian: '7', locrian: 'm7b5' };
+const QUALITY_FOR_MODE = { ionian: 'maj7', dorian: 'm7', mixolydian: '7', locrian: 'm7b5', lydian: 'maj7', lydianDominant: '7' };
 const BLUES_FORM = [['I7'], ['IV7'], ['I7'], ['I7'], ['IV7'], ['IV7'], ['I7'], ['VI7'], ['IIm7'], ['V7'], ['I7', 'VI7'], ['IIm7', 'V7']];
 const BLUES_ROMANS = { I7: [null, '7'], IV7: ['P4', '7'], V7: ['P5', '7'], VI7: ['M6', '7'], IIm7: ['M2', 'm7'] };
 
@@ -477,7 +477,123 @@ const advancedGenerators = {
   }
 };
 
-const GENERATORS = { ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators };
+// 上にのせる三和音が下のコードと重ならないよう、いちばん上の音より高くなるまでオクターブを上げる
+function placeAbove(notes, top) {
+  const shift = Math.max(0, Math.ceil((diatonicIndex(top) + 1 - diatonicIndex(notes[0])) / 7));
+  return notes.map((x) => ({ ...x, octave: x.octave + shift }));
+}
+
+// 7のコードの上にのせる三和音（ルートからの音程）と、それで加わる音
+const UPPER_TRIADS = [
+  { interval: 'M2', added: '9th・♯11th・13th' },
+  { interval: 'm6', added: '♭13th・ルート・♯9th' },
+  { interval: 'M6', added: '13th・♭9th・3度' },
+  { interval: 'd5', added: '♯11th・7度・♭9th' }
+];
+
+function upperStructure(roots) {
+  const dominant = makeChord(parseNote(pick(roots)), '7');
+  const shell = [0, 1, 3].map((i) => chordNotes(dominant)[i]);
+  const entries = UPPER_TRIADS.map((x) => ({ ...x, triad: makeChord(addInterval(dominant.root, x.interval), '') }));
+  const answer = pick(entries);
+  const columns = [{ notes: [...shell, ...placeAbove(chordNotes(answer.triad), shell[2])], chord: dominant }];
+  return { dominant, entries, answer, columns };
+}
+
+const CLICHE = ['m', 'mMaj7', 'm7', 'm6'];
+
+const developGenerators = {
+  susFour({ roots }) {
+    const sus = makeChord(parseNote(pick(roots)), '7sus4');
+    const dominant = makeChord(sus.root, '7');
+    const fourth = addInterval(sus.root, 'P4');
+    const third = addInterval(sus.root, 'M3');
+    const wrong = distinctWrong(['M3', 'P5', 'm7', 'M2'].map((x) => addInterval(sus.root, x)), fourth, 3);
+    return makeQuestion({
+      prompt: `${c(sus)} で、3度の代わりに入っている音は？`, correct: n(fourth), wrong: wrong.map(n),
+      explain: `${c(sus)} ＝ ${spell(chordNotes(sus))}。4度の ${n(fourth)} が半音下がって3度の ${n(third)} になると ${c(dominant)} です。`,
+      columns: [chordColumn(sus), chordColumn(dominant)]
+    });
+  },
+  susAsTwo({ roots }) {
+    const sus = makeChord(parseNote(pick(roots)), '7sus4');
+    const two = makeChord(addInterval(sus.root, 'P5'), 'm7');
+    return makeQuestion({
+      prompt: `${c(sus)} の響きは、どのm7を ${n(sus.root)} の上にのせたものに近い？`, correct: c(two),
+      wrong: ['M2', 'P4', 'M6'].map((x) => c(makeChord(addInterval(sus.root, x), 'm7'))),
+      explain: `${c(two)}（IIm7）の音を V の ${n(sus.root)} の上で鳴らすと、ツーとファイブを一度に鳴らしたような sus4 の響きになります。`,
+      columns: [chordColumn(two), chordColumn(sus)]
+    });
+  },
+  raisedFour({ roots }) {
+    const mode = pick(['lydian', 'lydianDominant']);
+    const chord = makeChord(parseNote(pick(roots)), QUALITY_FOR_MODE[mode]);
+    const scale = modeScale(chord.root, mode);
+    const wrong = distinctWrong(['P4', 'P5', 'M3', 'M6'].map((x) => addInterval(chord.root, x)), scale[3], 3);
+    return makeQuestion({
+      prompt: `${n(chord.root)} の${MODES[mode].name}で、4番目の音は？`, correct: n(scale[3]), wrong: wrong.map(n),
+      explain: `${MODES[mode].name}は4番目を半音上げたスケール：${spell(scale)}。${c(chord)} の♯11thがこの音です。`,
+      columns: [chordColumn(chord), ...scale.map(single)]
+    });
+  },
+  quartalStack({ roots }) {
+    const root = parseNote(pick(roots));
+    const stack = (codes) => codes.reduce((notes, code) => [...notes, addInterval(notes.at(-1), code)], [root]);
+    const correct = stack(['P4', 'P4', 'P4']);
+    const wrong = [['M3', 'm3', 'M3'], ['m3', 'M3', 'm3'], ['P4', 'M3', 'P4']].map(stack);
+    return makeQuestion({
+      prompt: `${n(root)} から完全4度を3つ積んだ音は？`, correct: spell(correct), wrong: wrong.map(spell),
+      explain: `${spell(correct)}。どの隣り合う音も完全4度なので、調がはっきりしない、浮遊した響きになります。`,
+      columns: [{ notes: correct, chord: null }]
+    });
+  },
+  quartalEar({ roots }) {
+    const root = parseNote(pick(roots));
+    const fourths = [root, ...[1, 2, 3].map((i) => transpose(root, i * 3, i * 5))];
+    const options = { '4度積み': fourths, '3度積み（m7）': chordNotes(makeChord(root, 'm7')) };
+    const [answer, other] = shuffle(Object.keys(options));
+    return makeQuestion({
+      prompt: '聴こえたのは 4度積み？ 3度積み？', correct: answer, wrong: [other],
+      explain: `${answer}：${spell(options[answer])}`,
+      columns: [{ notes: options[answer], chord: null }], ear: true
+    });
+  },
+  upperTensions({ roots }) {
+    const { dominant, entries, answer, columns } = upperStructure(roots);
+    return makeQuestion({
+      prompt: `${c(dominant)} の上に ${c(answer.triad)} の三和音をのせると、加わる音は？`, correct: answer.added,
+      wrong: entries.filter((x) => x !== answer).map((x) => x.added),
+      explain: `${c(answer.triad)} ＝ ${spell(chordNotes(answer.triad))}。${c(dominant)} から見ると ${answer.added} です。`,
+      columns
+    });
+  },
+  upperTriad({ roots }) {
+    const { dominant, entries, answer, columns } = upperStructure(roots);
+    return makeQuestion({
+      prompt: `${c(dominant)} に ${answer.added} を足したい。上にのせる三和音は？`, correct: c(answer.triad),
+      wrong: entries.filter((x) => x !== answer).map((x) => c(x.triad)),
+      explain: `${c(answer.triad)}（${spell(chordNotes(answer.triad))}）をのせると、${answer.added} が加わります。`,
+      columns
+    });
+  },
+  cliche({ roots }) {
+    const root = parseNote(pick(roots));
+    const chords = CLICHE.map((q) => makeChord(root, q));
+    const k = 1 + Math.floor(Math.random() * 3);
+    const shown = chords.map((x, i) => (i === k ? '？' : c(x))).join(' → ');
+    const moving = [root, ...['M7', 'm7', 'M6'].map((x) => addInterval(root, x))].map((x, i) => (i === 0 ? { ...x, octave: x.octave + 1 } : x));
+    return makeQuestion({
+      prompt: `ラインクリシェ。？に入るコードは？　${shown}`, correct: c(chords[k]),
+      wrong: chords.filter((_, i) => i !== k).map(c),
+      explain: `${line(chords)}。動く声部が ${spell(moving)} と半音ずつ下がります。`,
+      columns: chords.map(chordColumn)
+    });
+  }
+};
+
+const GENERATORS = {
+  ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators, ...developGenerators
+};
 
 // 単元に複数の出題形式があるときは、偏らないよう順番に混ぜてからシャッフルする
 export function buildQuiz(specs, length) {

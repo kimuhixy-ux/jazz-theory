@@ -40,7 +40,10 @@ export const QUALITIES = {
   m7b5: { name: 'マイナーセブン♭5', label: 'm7♭5', tones: ['m3', 'd5', 'm7'] },
   '7b9': { name: 'セブン・フラットナイン', label: '7(♭9)', tones: ['M3', 'P5', 'm7', 'm9'] },
   9: { name: 'ナインス', label: '9', tones: ['M3', 'P5', 'm7', 'M9'] },
-  dim7: { name: 'ディミニッシュセブンス', label: 'dim7', tones: ['m3', 'd5', 'd7'] }
+  dim7: { name: 'ディミニッシュセブンス', label: 'dim7', tones: ['m3', 'd5', 'd7'] },
+  '7sus4': { name: 'セブン・サスフォー', label: '7sus4', tones: ['P4', 'P5', 'm7'] },
+  mMaj7: { name: 'マイナー・メジャーセブンス', label: 'm(maj7)', tones: ['m3', 'P5', 'M7'] },
+  m6: { name: 'マイナーシックス', label: 'm6', tones: ['m3', 'P5', 'M6'] }
 };
 
 // コードに合わせる基本のスケール（ルートからの半音数。文字は1つずつ進む）
@@ -48,7 +51,9 @@ export const MODES = {
   ionian: { name: 'イオニアン', semitones: [0, 2, 4, 5, 7, 9, 11] },
   dorian: { name: 'ドリアン', semitones: [0, 2, 3, 5, 7, 9, 10] },
   mixolydian: { name: 'ミクソリディアン', semitones: [0, 2, 4, 5, 7, 9, 10] },
-  locrian: { name: 'ロクリアン', semitones: [0, 1, 3, 5, 6, 8, 10] }
+  locrian: { name: 'ロクリアン', semitones: [0, 1, 3, 5, 6, 8, 10] },
+  lydian: { name: 'リディアン', semitones: [0, 2, 4, 6, 7, 9, 11] },
+  lydianDominant: { name: 'リディアン・ドミナント', semitones: [0, 2, 4, 6, 7, 9, 10] }
 };
 
 export const DIATONIC = [
