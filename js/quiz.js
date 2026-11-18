@@ -784,9 +784,93 @@ const masteryGenerators = {
   }
 };
 
+// ソー・ホワット・ヴォイシング：ルートから完全4度を3つ、いちばん上だけ長3度
+const SO_WHAT = ['P4', 'P4', 'P4', 'M3'];
+const stackFrom = (root, codes) => codes.reduce((notes, code) => [...notes, addInterval(notes.at(-1), code)], [root]);
+
+// ずらした先のドリアンに♯♯や♭♭が出ないよう、2通りの綴り（例：D♭とC♯）から読みやすいほうを選ぶ
+function slipRoot(root, up) {
+  const spellings = up ? [addInterval(root, 'm2'), addInterval(root, 'A1')] : [transpose(root, -1, -1), transpose(root, 0, -1)];
+  return spellings.find((x) => modeScale(x, 'dorian').every(isPlain)) ?? spellings[0];
+}
+
+// 書きかえの技ごとに、元の進行と書きかえた進行を[キーからの音程, コードの種類]で持つ（nullはキーの音）
+const REHARMS = {
+  '裏コード': [[['M2', 'm7'], ['P5', '7'], [null, 'maj7']], [['M2', 'm7'], ['m2', '7'], [null, 'maj7']]],
+  'セカンダリー・ドミナント': [[[null, 'maj7'], ['M6', 'm7'], ['M2', 'm7'], ['P5', '7']], [[null, 'maj7'], ['M6', '7'], ['M2', 'm7'], ['P5', '7']]],
+  'パッシング・ディミニッシュ': [[[null, 'maj7'], [null, 'maj7'], ['M2', 'm7'], ['P5', '7']], [[null, 'maj7'], ['A1', 'dim7'], ['M2', 'm7'], ['P5', '7']]],
+  'バックドア': [[['M2', 'm7'], ['P5', '7'], [null, 'maj7']], [['P4', 'm7'], ['m7', '7'], [null, 'maj7']]]
+};
+const REHARM_HINT = {
+  '裏コード': 'V7 を、減5度離れた同じ3度・7度をもつ7のコードに置きかえました。',
+  'セカンダリー・ドミナント': '次のコードへ向かう7のコードに変えて、引っぱる力を強めました。',
+  'パッシング・ディミニッシュ': '2つのコードの間に、ベースが半音で上がる dim7 をはさみました。',
+  'バックドア': 'IIm7 → V7 の代わりに、IVm7 → ♭VII7 から I へ戻りました。'
+};
+const fromKey = (key, [interval, quality]) => makeChord(interval ? addInterval(key, interval) : key, quality);
+
+const masterGenerators = {
+  soWhatTop({ roots }) {
+    const chord = makeChord(parseNote(pick(roots)), 'm7');
+    const notes = stackFrom(chord.root, SO_WHAT);
+    return makeQuestion({
+      prompt: `${c(chord)} のソー・ホワット・ヴォイシング。${spell(notes.slice(0, 4))} の上にのせる音は？`, correct: n(notes[4]),
+      wrong: distinctWrong(['P4', 'm3', 'm2'].map((x) => addInterval(notes[3], x)), notes[4], 3).map(n),
+      explain: `いちばん上だけ長3度：${spell(notes)}。${c(chord)} の5度が上にきて、マイナーの響きがはっきりします。`,
+      columns: [{ notes, chord }]
+    });
+  },
+  soWhatStack({ roots }) {
+    const chord = makeChord(parseNote(pick(roots)), 'm7');
+    const notes = stackFrom(chord.root, SO_WHAT);
+    const wrong = [['P4', 'P4', 'P4', 'P4'], ['m3', 'M3', 'm3', 'M3'], ['M3', 'P4', 'P4', 'P4']].map((x) => spell(stackFrom(chord.root, x)));
+    return makeQuestion({
+      prompt: `${c(chord)} のソー・ホワット・ヴォイシングは？（下から）`, correct: spell(notes), wrong,
+      explain: `${n(chord.root)} から完全4度を3つ、最後に長3度：${spell(notes)}。`,
+      columns: [{ notes, chord }]
+    });
+  },
+  sideSlip({ roots }) {
+    const chord = makeChord(parseNote(pick(roots)), 'm7');
+    const up = Math.random() < 0.5;
+    const answer = makeChord(slipRoot(chord.root, up), 'm7');
+    const others = [slipRoot(chord.root, !up), addInterval(chord.root, 'M2'), transpose(chord.root, -1, -2)];
+    return makeQuestion({
+      prompt: `${c(chord)} の上で、ドリアンを${up ? '半音上' : '半音下'}にずらして弾く。どのm7のドリアン？`, correct: c(answer),
+      wrong: others.map((x) => c(makeChord(x, 'm7'))),
+      explain: `${c(answer)} のドリアン：${spell(modeScale(answer.root, 'dorian'))}。わざと外して、${c(chord)} に戻ると緊張がほどけます。`,
+      columns: [chordColumn(chord), ...modeScale(answer.root, 'dorian').map(single)]
+    });
+  },
+  slipEar({ roots }) {
+    const chord = makeChord(parseNote(pick(roots)), 'm7');
+    const options = {
+      'インサイド（内側）': modeScale(chord.root, 'dorian'),
+      'アウトサイド（半音上）': modeScale(slipRoot(chord.root, true), 'dorian')
+    };
+    const [answer, other] = shuffle(Object.keys(options));
+    return makeQuestion({
+      prompt: `${c(chord)} のあとのフレーズは インサイド？ アウトサイド？`, correct: answer, wrong: [other],
+      explain: `${answer}：${spell(options[answer])}`,
+      columns: [chordColumn(chord), ...options[answer].map(single)], ear: true
+    });
+  },
+  reharmName({ keys }) {
+    const name = pick(Object.keys(REHARMS));
+    const key = keyRoot(keys);
+    const [before, after] = REHARMS[name].map((list) => list.map((x) => fromKey(key, x)));
+    return makeQuestion({
+      prompt: `${line(before)} を ${line(after)} に書きかえた。使った技は？`, correct: name,
+      wrong: Object.keys(REHARMS).filter((x) => x !== name),
+      explain: REHARM_HINT[name],
+      columns: after.map(chordColumn)
+    });
+  }
+};
+
 const GENERATORS = {
   ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators, ...developGenerators,
-  ...applyGenerators, ...masteryGenerators
+  ...applyGenerators, ...masteryGenerators, ...masterGenerators
 };
 
 // 単元に複数の出題形式があるときは、偏らないよう順番に混ぜてからシャッフルする

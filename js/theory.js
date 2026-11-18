@@ -10,6 +10,7 @@ export const NOTATIONS = {
 };
 
 export const INTERVALS = {
+  A1: { name: '増1度', letters: 0, semitones: 1 },
   m2: { name: '短2度', letters: 1, semitones: 1 },
   M2: { name: '長2度', letters: 1, semitones: 2 },
   m3: { name: '短3度', letters: 2, semitones: 3 },
@@ -64,7 +65,10 @@ export const MODES = {
   bebopDominant: { name: 'ビバップ・ドミナント', semitones: [0, 2, 4, 5, 7, 9, 10, 11], letters: [0, 1, 2, 3, 4, 5, 6, 6] },
   bebopMajor: { name: 'ビバップ・メジャー', semitones: [0, 2, 4, 5, 7, 8, 9, 11], letters: [0, 1, 2, 3, 4, 4, 5, 6] },
   majorPentatonic: { name: 'メジャー・ペンタトニック', semitones: [0, 2, 4, 7, 9], letters: [0, 1, 2, 4, 5] },
-  minorPentatonic: { name: 'マイナー・ペンタトニック', semitones: [0, 3, 5, 7, 10], letters: [0, 2, 3, 4, 6] }
+  minorPentatonic: { name: 'マイナー・ペンタトニック', semitones: [0, 3, 5, 7, 10], letters: [0, 2, 3, 4, 6] },
+  harmonicMinor: { name: 'ハーモニック・マイナー', semitones: [0, 2, 3, 5, 7, 8, 11] },
+  phrygianDominant: { name: 'フリジアン・ドミナント', semitones: [0, 1, 4, 5, 7, 8, 10] },
+  wholeHalf: { name: 'ディミニッシュ・スケール', semitones: [0, 2, 3, 5, 6, 8, 9, 11], letters: [0, 1, 2, 3, 4, 5, 6, 6] }
 };
 
 export const DIATONIC = [
