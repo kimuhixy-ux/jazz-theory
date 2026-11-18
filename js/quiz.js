@@ -1235,10 +1235,131 @@ const masteryPlusGenerators = {
   }
 };
 
+// 曲の型：[キーからの音程, コードの種類, 役目, 合うスケール]（音程nullはキーの音、スケールnullは出題しない）
+const SONG_FORMS = {
+  autumn: {
+    minor: false,
+    bars: [
+      ['M2', 'm7', 'IIm7', 'dorian'], ['P5', '7', 'V7', 'mixolydian'], [null, 'maj7', 'Imaj7', 'ionian'], ['P4', 'maj7', 'IVmaj7', 'lydian'],
+      ['M7', 'm7b5', 'VIIm7♭5', 'locrian'], ['M3', '7', 'III7', 'phrygianDominant'], ['M6', 'm6', 'VIm6', 'melodicMinor'], ['M6', 'm6', 'VIm6', 'melodicMinor']
+    ]
+  },
+  rhythm: {
+    minor: false,
+    bars: [
+      [null, 'maj7', 'Imaj7', 'ionian'], ['M6', 'm7', 'VIm7', null], ['M2', 'm7', 'IIm7', 'dorian'], ['P5', '7', 'V7', 'mixolydian'],
+      ['M3', 'm7', 'IIIm7', null], ['M6', '7', 'VI7', 'phrygianDominant'], ['M2', 'm7', 'IIm7', 'dorian'], ['P5', '7', 'V7', 'mixolydian'],
+      ['M3', '7', 'III7', 'phrygianDominant'], ['M6', '7', 'VI7', 'phrygianDominant'], ['M2', '7', 'II7', null], ['P5', '7', 'V7', 'mixolydian']
+    ]
+  },
+  minorBlues: {
+    minor: true,
+    bars: [
+      [null, 'm7', 'Im7', 'dorian'], [null, 'm7', 'Im7', 'dorian'], [null, 'm7', 'Im7', 'dorian'], [null, 'm7', 'Im7', 'dorian'],
+      ['P4', 'm7', 'IVm7', 'dorian'], ['P4', 'm7', 'IVm7', 'dorian'], [null, 'm7', 'Im7', 'dorian'], [null, 'm7', 'Im7', 'dorian'],
+      ['m6', '7', '♭VI7', 'lydianDominant'], ['P5', '7', 'V7', 'phrygianDominant'], [null, 'm7', 'Im7', 'dorian'], ['P5', '7', 'V7', 'phrygianDominant']
+    ]
+  }
+};
+const SCALE_REASON = {
+  dorian: 'm7 の基本。6度がナチュラルで明るめのマイナーです。',
+  mixolydian: '7 の基本。メジャーのキーの中のドミナントに合います。',
+  ionian: 'キーそのもののスケールです。',
+  lydian: 'IVmaj7 はキーの音だと♯11th にあたる音が入るリディアンになります。',
+  locrian: 'VIIm7♭5 はキーの音だけで作るとロクリアンです。',
+  phrygianDominant: 'マイナーのコードへ解決する 7 なので、♭9th・♭13th を含むフリジアン・ドミナントが合います。',
+  melodicMinor: 'm6 は6度がナチュラルで7度が長7度のメロディックマイナーが合います。',
+  lydianDominant: '♭VI7 は♯11th を含むリディアン・ドミナントがよく合います。'
+};
+const SONG_SCALES = Object.keys(SCALE_REASON);
+// どちらでも弾けて正解が1つに決まらない組は、選択肢に並べない
+const SCALE_RIVAL = { mixolydian: 'lydianDominant', lydianDominant: 'mixolydian' };
+
+function songChart({ form: formKey, keys }) {
+  const form = SONG_FORMS[formKey];
+  const key = keyRoot(keys);
+  const chords = form.bars.map(([at, quality]) => fromKey(key, [at, quality]));
+  return { form, key, chords };
+}
+const keyLabel = (key, form) => `キー ${n(key)}${form.minor ? 'マイナー' : ''}`;
+// 印をつけた小節を【 】で囲んだ、1行のコード譜にする
+const chartText = (chords, marks) => chords.map((x, i) => (marks.includes(i) ? `【${c(x)}】` : c(x))).join(' | ');
+const nextOf = (chords, i) => chords[(i + 1) % chords.length];
+// 次のコードのルートが5度下（4度上）なら、強い解決の流れ
+const fallsFifth = (a, b) => (((noteToMidi(b.root) - noteToMidi(a.root)) % 12) + 12) % 12 === 5;
+// 半音上の音。裏コードのルートは解決先の半音上なので、C♭のような綴りにならないよう2通りから読みやすい方を選ぶ
+const halfStepUp = (target) => [addInterval(target, 'm2'), addInterval(target, 'A1')].sort((a, b) => spellingCost(a) - spellingCost(b))[0];
+
+const songGenerators = {
+  songRole(params) {
+    const { form, key, chords } = songChart(params);
+    const i = Math.floor(Math.random() * chords.length);
+    const roman = form.bars[i][2];
+    const pool = [...new Set([...form.bars.map((x) => x[2]), ...DIATONIC.map((x) => x.roman)])].filter((x) => x !== roman);
+    return makeQuestion({
+      prompt: `${keyLabel(key, form)} の曲：${chartText(chords, [i])}　【 】のコードの役目は？`, correct: roman, wrong: shuffle(pool).slice(0, 3),
+      explain: `${c(chords[i])} は${keyLabel(key, form)}の ${roman}。キーの音から数えて役目を読むと、ほかのキーでも同じ考え方で弾けます。`,
+      columns: [chordColumn(chords[i])]
+    });
+  },
+  songTritone(params) {
+    const { form, key, chords } = songChart(params);
+    const i = pick(chords.map((_, k) => k).filter((k) => chords[k].quality === '7' && fallsFifth(chords[k], nextOf(chords, k))));
+    const answer = makeChord(halfStepUp(nextOf(chords, i).root), '7');
+    const others = [chords[i], makeChord(halfStepUp(chords[i].root), '7'), makeChord(answer.root, 'm7'), makeChord(nextOf(chords, i).root, '7')];
+    const wrong = [...new Set(others.map(c))].filter((x) => x !== c(answer)).slice(0, 3);
+    return makeQuestion({
+      prompt: `${keyLabel(key, form)} の曲：${chartText(chords, [i])}　【 】を裏コードにすると？`, correct: c(answer), wrong,
+      explain: `${c(chords[i])} と ${c(answer)} は3度と7度が同じ。ベースが半音で ${c(nextOf(chords, i))} へ下りていきます。`,
+      columns: [chordColumn(chords[i]), chordColumn(answer), chordColumn(nextOf(chords, i))]
+    });
+  },
+  songBackdoor(params) {
+    const { form, key, chords } = songChart(params);
+    const starts = chords.map((_, k) => k).filter((k) => chords[k].quality === 'm7' && nextOf(chords, k).quality === '7'
+      && nextOf(chords, k + 1).quality === 'maj7' && fallsFifth(chords[k], nextOf(chords, k)) && fallsFifth(nextOf(chords, k), nextOf(chords, k + 1)));
+    const i = pick(starts);
+    const j = (i + 1) % chords.length;
+    const target = nextOf(chords, j).root;
+    const pair = (a, qa, b, qb) => `${c(makeChord(a, qa))} → ${c(makeChord(b, qb))}`;
+    const correct = pair(addInterval(target, 'P4'), 'm7', addInterval(target, 'm7'), '7');
+    return makeQuestion({
+      prompt: `${keyLabel(key, form)} の曲：${chartText(chords, [i, j])}　【 】の2つをバックドアに書きかえると？`, correct,
+      wrong: [pair(chords[i].root, 'm7', halfStepUp(target), '7'), pair(addInterval(target, 'P4'), 'maj7', chords[j].root, '7'), pair(addInterval(target, 'M6'), '7', chords[i].root, 'm7')],
+      explain: `IVm7 → ♭VII7 から ${c(nextOf(chords, j))} へ。サブドミナントマイナーの陰りを通って、裏口から帰ってきます。`,
+      columns: [chordColumn(makeChord(addInterval(target, 'P4'), 'm7')), chordColumn(makeChord(addInterval(target, 'm7'), '7')), chordColumn(nextOf(chords, j))]
+    });
+  },
+  songScale(params) {
+    const { form, key, chords } = songChart(params);
+    const i = pick(form.bars.map((_, k) => k).filter((k) => form.bars[k][3]));
+    const mode = form.bars[i][3];
+    const wrong = shuffle(SONG_SCALES.filter((x) => x !== mode && x !== SCALE_RIVAL[mode])).slice(0, 3).map((x) => MODES[x].name);
+    return makeQuestion({
+      prompt: `${keyLabel(key, form)} の曲：${chartText(chords, [i])}　【 】の上で弾くスケールは？`, correct: MODES[mode].name, wrong,
+      explain: `${c(chords[i])}（${form.bars[i][2]}）：${SCALE_REASON[mode]}${spell(modeScale(chords[i].root, mode))}`,
+      columns: [chordColumn(chords[i]), ...modeScale(chords[i].root, mode).map(single)]
+    });
+  },
+  songGuide(params) {
+    const { form, key, chords } = songChart(params);
+    const i = pick(chords.map((_, k) => k).filter((k) => fallsFifth(chords[k], nextOf(chords, k))));
+    const next = nextOf(chords, i);
+    const seventh = chordNotes(chords[i])[3];
+    const answer = chordNotes(next)[1];
+    return makeQuestion({
+      prompt: `${keyLabel(key, form)} の曲：${chartText(chords, [i])}　【 】の7度 ${n(seventh)} は、次の ${c(next)} で何の音へ進む？`, correct: n(answer),
+      wrong: distinctWrong([...chordNotes(next), seventh, halfStepUp(seventh)], answer, 3).map(n),
+      explain: `${n(seventh)} が半音か全音下がって、${c(next)} の3度 ${n(answer)} へ。この線をつなぐと進行がなめらかに聞こえます。`,
+      columns: [guideColumn(chords[i]), guideColumn(next)]
+    });
+  }
+};
+
 const GENERATORS = {
   ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators, ...developGenerators,
   ...applyGenerators, ...masteryGenerators, ...masterGenerators,
-  ...secretGenerators, ...masteryPlusGenerators
+  ...secretGenerators, ...masteryPlusGenerators, ...songGenerators
 };
 
 // 単元に複数の出題形式があるときは、偏らないよう順番に混ぜてからシャッフルする

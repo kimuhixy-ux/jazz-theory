@@ -1834,6 +1834,143 @@
         { "type": "pivotChord", "params": { "keys": ["C", "F", "G", "Bb"] } },
         { "type": "pivotRoman", "params": { "keys": ["C", "F", "G", "Bb"] } }
       ]
+    },
+    {
+      "id": "song-autumn",
+      "section": "実践",
+      "title": "曲で使う：枯葉型の進行",
+      "summary": "メジャーとマイナーのツーファイブが続く8小節に、技を当てはめる",
+      "cards": [
+        {
+          "title": "進行の形",
+          "text": [
+            "{c:Am7} → {c:D7} → {c:Gmaj7} → {c:Cmaj7} → {c:F#m7b5} → {c:B7} → {c:Em6}。",
+            "スタンダード曲「枯葉」の冒頭と同じ型です。キー{n:G4}のツーファイブワンのあと、{n:E4}マイナーのツーファイブワンが続きます。"
+          ],
+          "example": { "chords": ["Am7", "D7", "Gmaj7", "Cmaj7"] }
+        },
+        {
+          "title": "裏コードを入れる",
+          "text": [
+            "{c:D7}は次の{c:Gmaj7}へ5度下がるので、裏コードの{c:Ab7}に置きかえられます。",
+            "{c:B7}も{c:F7}に置きかえると、ベースが半音で{c:Em6}へ下ります。"
+          ],
+          "example": { "chords": ["Am7", "Ab7", "Gmaj7"] }
+        },
+        {
+          "title": "バックドアで帰る",
+          "text": [
+            "{c:Am7} → {c:D7} → {c:Gmaj7}を、{c:Cm7} → {c:F7} → {c:Gmaj7}に書きかえます。",
+            "IVm7 → ♭VII7 の陰りを通って、別の道からトニックへ戻ります。"
+          ],
+          "example": { "chords": ["Cm7", "F7", "Gmaj7"] }
+        },
+        {
+          "title": "スケールとガイドトーン",
+          "text": [
+            "メジャー側の{c:Am7}はドリアン、{c:Cmaj7}はリディアン。マイナー側の{c:B7}はフリジアン・ドミナント、{c:Em6}はメロディックマイナーが合います。",
+            "7度が半音か全音下がって次のコードの3度へ進む線を吹くと、コードが変わる瞬間がはっきり聞こえます。"
+          ],
+          "example": { "chords": ["F#m7b5", "B7", "Em6"] }
+        }
+      ],
+      "quiz": [
+        { "type": "songRole", "params": { "form": "autumn", "keys": ["C", "Eb", "F", "G", "Bb"] } },
+        { "type": "songTritone", "params": { "form": "autumn", "keys": ["C", "Eb", "F", "G", "Bb"] } },
+        { "type": "songBackdoor", "params": { "form": "autumn", "keys": ["C", "Eb", "F", "G", "Bb"] } },
+        { "type": "songScale", "params": { "form": "autumn", "keys": ["C", "Eb", "F", "G", "Bb"] } },
+        { "type": "songGuide", "params": { "form": "autumn", "keys": ["C", "Eb", "F", "G", "Bb"] } }
+      ]
+    },
+    {
+      "id": "song-rhythm",
+      "section": "実践",
+      "title": "曲で使う：循環進行",
+      "summary": "I-VI-II-V とサビのドミナントの連鎖で、セカンダリーと裏コードを使う",
+      "cards": [
+        {
+          "title": "Aの部分",
+          "text": [
+            "{c:Bbmaj7} → {c:Gm7} → {c:Cm7} → {c:F7}をくり返す、I-VI-II-V の循環進行です。",
+            "ガーシュウィンの「I Got Rhythm」の型なので、リズム・チェンジと呼ばれます。"
+          ],
+          "example": { "chords": ["Bbmaj7", "Gm7", "Cm7", "F7"] }
+        },
+        {
+          "title": "VIm7 を VI7 に",
+          "text": [
+            "{c:Gm7}を{c:G7}にすると、次の{c:Cm7}へ向かうセカンダリー・ドミナントになります。",
+            "マイナーのコードへ解決するので、フリジアン・ドミナントが合います。"
+          ],
+          "example": { "chords": ["Bbmaj7", "G7", "Cm7", "F7"] }
+        },
+        {
+          "title": "サビはドミナントの連鎖",
+          "text": [
+            "{c:D7} → {c:G7} → {c:C7} → {c:F7}。どれも次へ5度下がる7のコードです。",
+            "それぞれ裏コードの{c:Ab7}・{c:Db7}・{c:Gb7}・{c:B7}に置きかえられます。"
+          ],
+          "example": { "chords": ["D7", "G7", "C7", "F7"] }
+        },
+        {
+          "title": "役目で読む",
+          "text": [
+            "コードを名前ではなく役目（Imaj7・VI7・IIm7 など）で覚えると、どのキーでも同じ技を当てはめられます。",
+            "{c:F7}を裏コードの{c:B7}にすると、{c:Cm7} → {c:B7} → {c:Bbmaj7}とベースが半音ずつ下ります。"
+          ],
+          "example": { "chords": ["Cm7", "B7", "Bbmaj7"] }
+        }
+      ],
+      "quiz": [
+        { "type": "songRole", "params": { "form": "rhythm", "keys": ["C", "Eb", "F", "G", "Bb"] } },
+        { "type": "songTritone", "params": { "form": "rhythm", "keys": ["C", "Eb", "F", "G", "Bb"] } },
+        { "type": "songScale", "params": { "form": "rhythm", "keys": ["C", "Eb", "F", "G", "Bb"] } },
+        { "type": "songGuide", "params": { "form": "rhythm", "keys": ["C", "Eb", "F", "G", "Bb"] } }
+      ]
+    },
+    {
+      "id": "song-minor-blues",
+      "section": "実践",
+      "title": "曲で使う：マイナー・ブルース",
+      "summary": "Im7 と IVm7 を中心にした12小節で、スケールとガイドトーンを選ぶ",
+      "cards": [
+        {
+          "title": "12小節の形",
+          "text": [
+            "{c:Cm7}を4小節、{c:Fm7}を2小節、{c:Cm7}を2小節。最後の4小節は{c:Ab7} → {c:G7} → {c:Cm7} → {c:G7}です。"
+          ],
+          "example": { "chords": ["Cm7", "Fm7", "Ab7", "G7"] }
+        },
+        {
+          "title": "♭VI7 から V7 へ",
+          "text": [
+            "{c:Ab7}は{c:G7}の半音上。{c:D7}の裏コードと同じ働きで、ベースが半音で下ります。",
+            "♯11th を含むリディアン・ドミナントがよく合います。"
+          ],
+          "example": { "chords": ["Ab7", "G7", "Cm7"] }
+        },
+        {
+          "title": "V7 はフリジアン・ドミナント",
+          "text": [
+            "{c:G7}はマイナーの{c:Cm7}へ解決するので、♭9th・♭13th を含むフリジアン・ドミナントが合います。"
+          ],
+          "example": { "chords": ["G7b9", "Cm7"] }
+        },
+        {
+          "title": "Im7 と IVm7 はドリアン",
+          "text": [
+            "{c:Cm7}と{c:Fm7}はどちらもドリアンで弾けます。",
+            "{c:Cm7}の7度{n:Bb4}は、{c:Fm7}の3度{n:Ab4}へ全音下がります。"
+          ],
+          "example": { "chords": ["Cm7", "Fm7"] }
+        }
+      ],
+      "quiz": [
+        { "type": "songRole", "params": { "form": "minorBlues", "keys": ["C", "D", "E", "F", "G", "A"] } },
+        { "type": "songTritone", "params": { "form": "minorBlues", "keys": ["C", "D", "E", "F", "G", "A"] } },
+        { "type": "songScale", "params": { "form": "minorBlues", "keys": ["C", "D", "E", "F", "G", "A"] } },
+        { "type": "songGuide", "params": { "form": "minorBlues", "keys": ["C", "D", "E", "F", "G", "A"] } }
+      ]
     }
   ]
 }
