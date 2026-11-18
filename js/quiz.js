@@ -1046,10 +1046,199 @@ const secretGenerators = {
   }
 };
 
+// ペダルの音を低く置き、その上にコードの音を積む
+const overPedal = (pedal, chord) => ({ notes: stackUp([{ ...pedal, octave: 3 }, ...chordNotes(chord)]), chord });
+const diatonicChords = (key) => majorScale(key).map((root, i) => makeChord(root, DIATONIC[i].quality));
+const PEDAL_SETS = { tonic: { name: 'トニック', degrees: [0, 1, 0] }, dominant: { name: 'ドミナント', degrees: [1, 3, 4] } };
+
+// 同じ種類のコードを動かす幅（下がる幅はup: false）
+const CONSTANT_MOVES = [
+  { code: 'm3', up: false, label: '短3度下' },
+  { code: 'M3', up: false, label: '長3度下' },
+  { code: 'm2', up: false, label: '半音下' },
+  { code: 'M2', up: true, label: '全音上' }
+];
+// 同じ幅で動かし続けると♯や♭がたまっていくので、同じ高さの綴り（文字を1つ前後）から読みやすいものを選ぶ
+function moveRoot(root, move, quality) {
+  const { letters, semitones } = INTERVALS[move.code];
+  const moved = move.up ? transpose(root, letters, semitones) : transpose(root, -letters, -semitones);
+  const options = [0, -1, 1].map((k) => transpose(moved, k, 0)).filter((x) => chordNotes(makeChord(x, quality)).every(isPlain));
+  return options.sort((a, b) => spellingCost(a) - spellingCost(b))[0] ?? moved;
+}
+
+// 3つのルートがどれも読みやすい綴り（C♭やE♯を含まない）になるまで選び直す
+function constantChain(roots) {
+  for (;;) {
+    const move = pick(CONSTANT_MOVES);
+    const quality = pick(['maj7', 'm7']);
+    const first = parseNote(pick(roots));
+    const second = moveRoot(first, move, quality);
+    const chain = [first, second, moveRoot(second, move, quality)];
+    if (chain.every((x) => spellingCost(x) <= 3)) return { move, quality, chain };
+  }
+}
+
+// E♯・B♯・F♭・C♭は記譜ごとに見ても読みにくいので、♯♭の数に加えて重く数える
+function spellingCost(note) {
+  return Object.keys(NOTATIONS).reduce((sum, key) => {
+    const x = toWritten(note, key);
+    const odd = (x.acc === 1 && (x.letter === 2 || x.letter === 6)) || (x.acc === -1 && (x.letter === 0 || x.letter === 3));
+    return sum + Math.abs(x.acc) + (odd ? 3 : 0);
+  }, 0);
+}
+
+// パターンの数字をコードの音程に。3度と7度はコードの種類で変わる
+const DIGITAL_PATTERNS = { '1-2-3-5': ['1', '2', '3', '5'], '1-3-5-7': ['1', '3', '5', '7'], '3-5-7-9': ['3', '5', '7', '9'], '5-3-2-1': ['5', '3', '2', '1'] };
+function degreeNote(chord, degree) {
+  const third = chord.quality === 'm7' ? 'm3' : 'M3';
+  const seventh = chord.quality === 'maj7' ? 'M7' : 'm7';
+  const code = { 2: 'M2', 3: third, 5: 'P5', 7: seventh, 9: 'M9' }[degree];
+  return code ? addInterval(chord.root, code) : chord.root;
+}
+function digitalNotes(chord, name) {
+  const notes = DIGITAL_PATTERNS[name].map((d) => degreeNote(chord, d));
+  return name === '5-3-2-1' ? stackUp([...notes].reverse()).reverse() : stackUp(notes);
+}
+
+// キーの主音と5度の真ん中（3度と♭3度の間）を軸に、音を鏡に映す。文字も同じ軸で折り返して綴る
+function mirror(key, note) {
+  const letters = (((key.letter + 4 - note.letter) % 7) + 7) % 7;
+  let semitones = ((((noteToMidi(key) % 12) + 7 - (noteToMidi(note) % 12)) % 12) + 12) % 12;
+  let result = transpose(key, letters, semitones);
+  while (result.acc > 6) result = transpose(key, letters, (semitones -= 12));
+  while (result.acc < -6) result = transpose(key, letters, (semitones += 12));
+  return result;
+}
+// 鏡に映すと音程の並びが逆さになるので、7度を映した音が新しいルートになる
+const MIRROR_QUALITY = { 7: 'm7b5', m7: 'm7', maj7: 'maj7' };
+const mirrorChord = (key, chord) => makeChord(mirror(key, chordNotes(chord)[3]), MIRROR_QUALITY[chord.quality]);
+
+const masteryPlusGenerators = {
+  pedalNote({ keys }) {
+    const key = keyRoot(keys);
+    const set = pick(Object.values(PEDAL_SETS));
+    const pedal = set === PEDAL_SETS.tonic ? key : addInterval(key, 'P5');
+    const chords = set.degrees.map((i) => diatonicChords(key)[i]);
+    return makeQuestion({
+      prompt: `${chords.map(c).join(' → ')}。ずっと低く鳴り続けている音（ペダル）は？`, correct: n(pedal),
+      wrong: distinctWrong(chords.flatMap(chordNotes), pedal, 3).map(n),
+      explain: `いちばん下の ${n(pedal)} が動かず、その上でコードが変わっています（${set.name}・ペダル）。`,
+      columns: chords.map((chord) => overPedal(pedal, chord))
+    });
+  },
+  pedalDominant({ keys }) {
+    const key = keyRoot(keys);
+    const answer = addInterval(key, 'P5');
+    return makeQuestion({
+      prompt: `キー ${n(key)} でドミナント・ペダルに使う音は？`, correct: n(answer),
+      wrong: distinctWrong(['P4', 'M2', 'M6', 'M3'].map((x) => addInterval(key, x)).concat([key]), answer, 3).map(n),
+      explain: `キーの5度、${n(answer)}。V7のルートを伸ばし続けると、解決を待つ緊張が長く続きます。`,
+      columns: diatonicChords(key).filter((_, i) => [1, 3, 4].includes(i)).map((chord) => overPedal(answer, chord))
+    });
+  },
+  constantNext({ roots }) {
+    const { move, quality, chain: [first, second, third] } = constantChain(roots);
+    const answer = makeChord(third, quality);
+    const others = [makeChord(third, quality === 'maj7' ? 'm7' : 'maj7'), makeChord(third, '7'), ...CONSTANT_MOVES.filter((x) => x !== move).map((x) => makeChord(moveRoot(second, x, quality), quality)).filter((x) => spellingCost(x.root) <= 3)];
+    const wrong = [...new Set(others.map(c))].filter((x) => x !== c(answer)).slice(0, 3);
+    return makeQuestion({
+      prompt: `${c(makeChord(first, quality))} → ${c(makeChord(second, quality))} → ？ 同じ形のまま動かすと次は？`, correct: c(answer), wrong,
+      explain: `${move.label}ずつ、${QUALITIES[quality].label}のまま動かしています。キーの決まりより、形のそろった響きを優先する作り方です。`,
+      columns: [first, second, third].map((r) => chordColumn(makeChord(r, quality)))
+    });
+  },
+  constantWhich({ roots }) {
+    const { move, quality, chain } = constantChain(roots);
+    const [first] = chain;
+    const chords = chain.map((r) => makeChord(r, quality));
+    const key = placeRoot(first);
+    const line = (list) => list.map(c).join(' → ');
+    const wrong = [line(twoFiveOne(key)), line(minorTwoFiveOne(key)), line([0, 5, 1].map((i) => diatonicChords(key)[i]))];
+    return makeQuestion({
+      prompt: 'コンスタント・ストラクチャーになっている進行はどれ？', correct: line(chords), wrong,
+      explain: `${line(chords)} は、すべて同じ種類のコードが${move.label}ずつ動いています。ほかはキーの中のコードをつないだ進行です。`,
+      columns: chords.map(chordColumn)
+    });
+  },
+  digitalSpell({ roots, qualities }) {
+    const chord = randomChord(roots, qualities);
+    const name = pick(Object.keys(DIGITAL_PATTERNS));
+    const notes = digitalNotes(chord, name);
+    return makeQuestion({
+      prompt: `${c(chord)} で ${name} のパターンを弾くと？`, correct: spell(notes),
+      wrong: Object.keys(DIGITAL_PATTERNS).filter((x) => x !== name).map((x) => spell(digitalNotes(chord, x))),
+      explain: `${c(chord)} の ${name}：${spell(notes)}。数字はコードのルートから数えた度数です。`,
+      columns: [chordColumn(chord), ...notes.map(single)]
+    });
+  },
+  digitalName({ roots, qualities }) {
+    const chord = randomChord(roots, qualities);
+    const name = pick(Object.keys(DIGITAL_PATTERNS));
+    const notes = digitalNotes(chord, name);
+    return makeQuestion({
+      prompt: `${c(chord)} の上で ${spell(notes)}。何のパターン？`, correct: name,
+      wrong: Object.keys(DIGITAL_PATTERNS).filter((x) => x !== name),
+      explain: `${c(chord)} のルートから数えると ${name} です。`,
+      columns: [chordColumn(chord), ...notes.map(single)]
+    });
+  },
+  mirrorNote({ keys }) {
+    const key = keyRoot(keys);
+    const note = pick(majorScale(key));
+    const answer = mirror(key, note);
+    return makeQuestion({
+      prompt: `キー ${n(key)} のネガティブ・ハーモニー。${n(note)} は鏡に映すと何の音？`, correct: n(answer),
+      wrong: distinctWrong([...majorScale(key), ...majorScale(key).map((x) => transpose(x, 0, -1))], answer, 3).map(n),
+      explain: `軸は ${n(key)} と ${n(addInterval(key, 'P5'))} のちょうど真ん中。${n(key)}↔${n(addInterval(key, 'P5'))} のように入れ替わり、${n(note)} は ${n(answer)} に映ります。`,
+      columns: [single(fitRange(note)), single(fitRange(answer))]
+    });
+  },
+  mirrorChordName({ keys }) {
+    const key = keyRoot(keys);
+    const chord = pick([1, 3, 4, 0].map((i) => diatonicChords(key)[i]));
+    const answer = mirrorChord(key, chord);
+    const candidates = [chord, makeChord(answer.root, '7'), makeChord(answer.root, answer.quality === 'm7' ? 'maj7' : 'm7'), makeChord(answer.root, 'm7b5')];
+    const wrong = [...new Set(candidates.map(c))].filter((x) => x !== c(answer)).slice(0, 3);
+    return makeQuestion({
+      prompt: `キー ${n(key)} のネガティブ・ハーモニーで ${c(chord)} を鏡に映すと？`, correct: c(answer), wrong,
+      explain: `${spell(chordNotes(chord))} を1音ずつ映すと ${spell(chordNotes(chord).map((x) => mirror(key, x)))}。下から並べ直すと ${c(answer)} です。`,
+      columns: [chordColumn(chord), chordColumn(answer)]
+    });
+  },
+  pivotChord({ keys }) {
+    const key = keyRoot(keys);
+    const other = placeRoot(addInterval(key, 'P5'));
+    const a = diatonicChords(key).map(c);
+    const b = diatonicChords(other).map(c);
+    const shared = a.filter((x) => b.includes(x));
+    const answer = pick(diatonicChords(key).filter((x) => b.includes(c(x))));
+    return makeQuestion({
+      prompt: `キー ${n(key)} からキー ${n(other)} へ転調する。両方のキーにあるピボット・コードは？`, correct: c(answer),
+      wrong: shuffle([...a, ...b].filter((x) => !shared.includes(x))).slice(0, 3),
+      explain: `両方のキーにあるのは ${shared.join('・')}。どれも、片方のキーからもう片方のキーへの橋わたしに使えます。`,
+      columns: [chordColumn(answer)]
+    });
+  },
+  pivotRoman({ keys }) {
+    const key = keyRoot(keys);
+    const other = placeRoot(addInterval(key, 'P5'));
+    const a = diatonicChords(key);
+    const b = diatonicChords(other);
+    const i = pick(a.map((x, k) => k).filter((k) => b.some((y) => c(y) === c(a[k]))));
+    const j = b.findIndex((y) => c(y) === c(a[i]));
+    return makeQuestion({
+      prompt: `${c(a[i])} はキー ${n(key)} では ${DIATONIC[i].roman}。キー ${n(other)} では？`, correct: DIATONIC[j].roman,
+      wrong: shuffle(DIATONIC.filter((_, k) => k !== j && k !== i)).slice(0, 3).map((x) => x.roman),
+      explain: `${c(a[i])} はキー ${n(other)} の ${DIATONIC[j].roman}。同じコードの役目を読みかえて、新しいキーに入ります。`,
+      columns: [chordColumn(a[i])]
+    });
+  }
+};
+
 const GENERATORS = {
   ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators, ...developGenerators,
   ...applyGenerators, ...masteryGenerators, ...masterGenerators,
-  ...secretGenerators
+  ...secretGenerators, ...masteryPlusGenerators
 };
 
 // 単元に複数の出題形式があるときは、偏らないよう順番に混ぜてからシャッフルする
