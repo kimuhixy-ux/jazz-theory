@@ -568,6 +568,186 @@
         { "type": "modeEar", "params": { "list": ["dorian", "mixolydian"] } },
         { "type": "chordScale", "params": { "roots": ["C", "F", "G", "D", "Bb", "Eb"] } }
       ]
+    },
+    {
+      "id": "diminished",
+      "section": "上級",
+      "title": "ディミニッシュコード",
+      "summary": "短3度ずつ積んだdim7。正体はルートのない7(♭9)",
+      "cards": [
+        {
+          "title": "短3度ずつ4つ積む",
+          "text": [
+            "dim7（ディミニッシュセブンス）は、短3度ずつ4つの音を積んだコードです。{c:Bdim7}なら{n:B3}・{n:D4}・{n:F4}・{n:Ab4}。",
+            "どの隣り合う2音も同じ距離なので、宙に浮いたような、張りつめた響きがします。"
+          ],
+          "example": { "chords": ["Bdim7"] }
+        },
+        {
+          "title": "正体はルートのない7(♭9)",
+          "text": [
+            "{c:G7b9}からルートの{n:G3}を抜くと、残りの{n:B3}・{n:D4}・{n:F4}・{n:Ab4}は{c:Bdim7}と同じ音です。",
+            "だからdim7は、ドミナントの代わりとして次のコードへ向かう力を持っています。"
+          ],
+          "example": { "chords": ["G7b9", "Bdim7", "Cmaj7"] }
+        },
+        {
+          "title": "パッシング・ディミニッシュ",
+          "text": [
+            "{c:Cmaj7} → {c:C#dim7} → {c:Dm7}。ベースが{n:C4}→{n:C#4}→{n:D4}と半音で上がり、間をなめらかにつなぎます。",
+            "{c:C#dim7}は、{c:Dm7}へ向かう{c:A7b9}からルートを省いた形でもあります。"
+          ],
+          "example": { "chords": ["Cmaj7", "C#dim7", "Dm7"] }
+        }
+      ],
+      "quiz": [
+        { "type": "quality", "params": { "list": ["m7", "m7b5", "dim7"] } },
+        { "type": "passingDim", "params": { "keys": ["C", "F", "Bb", "Eb"] } },
+        { "type": "dimAsDominant", "params": { "roots": ["C", "D", "E", "F", "G", "A"] } }
+      ]
+    },
+    {
+      "id": "subdominant-minor",
+      "section": "上級",
+      "title": "サブドミナントマイナーとバックドア",
+      "summary": "同じ主音のマイナーキーからコードを借りる",
+      "cards": [
+        {
+          "title": "マイナーキーから借りてくる",
+          "text": [
+            "キー{n:C4}の曲で、同じ{n:C4}を主音にするマイナーキーのコードを借りてくることがあります。",
+            "とくによく借りるのが{c:Fm7}（IVm7）。{c:Fmaj7} → {c:Fm7} → {c:Cmaj7} と進むと、切なく温かい響きになります。"
+          ],
+          "example": { "chords": ["Fmaj7", "Fm7", "Cmaj7"] }
+        },
+        {
+          "title": "サブドミナントマイナーの仲間",
+          "text": [
+            "IVm7のほか、{c:Bb7}（♭VII7）や{c:Abmaj7}（♭VImaj7）も同じ仲間です。",
+            "どれもキー{n:C4}にない{n:Ab4}を含みます。この音がサブドミナントマイナーの色です。"
+          ],
+          "example": { "chords": ["Fm7", "Bb7", "Abmaj7"] }
+        },
+        {
+          "title": "バックドア・ツーファイブ",
+          "text": [
+            "{c:Fm7} → {c:Bb7} → {c:Cmaj7} は、裏口から帰るような進行なのでバックドアと呼ばれます。",
+            "{c:G7}を使わずに、全音下の{c:Bb7}から{c:Cmaj7}へ解決します。"
+          ],
+          "example": { "chords": ["Fm7", "Bb7", "Cmaj7"] }
+        }
+      ],
+      "quiz": [
+        { "type": "backdoorEar", "params": { "keys": ["C", "F", "G", "Bb"] } },
+        { "type": "subMinor", "params": { "keys": ["C", "F", "G", "Bb", "D", "Eb"] } }
+      ]
+    },
+    {
+      "id": "two-five-chains",
+      "section": "上級",
+      "title": "ツーファイブの連鎖",
+      "summary": "どの7のコードにもIIm7を組ませて、つなげていく",
+      "cards": [
+        {
+          "title": "リレイテッドII",
+          "text": [
+            "セカンダリードミナントの前には、組になるIIm7を置けます。これをリレイテッドIIといいます。",
+            "{c:A7}は{c:Dm7}へ向かうので、{n:D4}から見たIIm7の{c:Em7}が組の相手。{c:Em7} → {c:A7} → {c:Dm7} です。"
+          ],
+          "example": { "chords": ["Em7", "A7", "Dm7"] }
+        },
+        {
+          "title": "ツーファイブの連鎖",
+          "text": [
+            "{c:Em7} → {c:A7} → {c:Dm7} → {c:G7} → {c:Cmaj7}。",
+            "m7 → 7 の組が、完全5度ずつ下がりながら続きます。スタンダード曲でよく出会う形です。"
+          ],
+          "example": { "chords": ["Em7", "A7", "Dm7", "G7", "Cmaj7"] }
+        },
+        {
+          "title": "裏コードを混ぜた連鎖",
+          "text": [
+            "7のコードを裏コードに替えると、{c:Em7} → {c:Eb7} → {c:Dm7} → {c:Db7} → {c:Cmaj7}。",
+            "ベースが半音ずつ下がる、なめらかな連鎖になります。"
+          ],
+          "example": { "chords": ["Em7", "Eb7", "Dm7", "Db7", "Cmaj7"] }
+        }
+      ],
+      "quiz": [
+        { "type": "relatedTwo", "params": { "roots": ["C", "D", "E", "F", "G", "A", "Bb"] } },
+        { "type": "chain", "params": { "keys": ["C", "F", "G", "Bb", "Eb", "D"] } }
+      ]
+    },
+    {
+      "id": "altered-tensions",
+      "section": "上級",
+      "title": "オルタード・テンション",
+      "summary": "7のコードだけが使える、半音ずらしたテンション",
+      "cards": [
+        {
+          "title": "ドミナントだけの変化音",
+          "text": [
+            "7のコードでは、9thと13thを半音ずらした ♭9th・♯9th・♭13th や、11thを半音上げた ♯11th が使えます。これをオルタード・テンションといいます。",
+            "{c:C7}なら ♭9th＝{n:Db5}、♯9th＝{n:D#5}、♯11th＝{n:F#5}、♭13th＝{n:Ab5}。"
+          ],
+          "example": { "columns": [{ "notes": ["Bb3", "E4", "Ab4", "Db5"], "chord": "C7" }] }
+        },
+        {
+          "title": "解決先で選ぶ",
+          "text": [
+            "マイナーへ解決する{c:G7} → {c:Cm7}では、キーの音とそろう ♭9th・♭13th（{n:Ab4}・{n:Eb5}）が自然です。",
+            "メジャーへ解決する{c:G7} → {c:Cmaj7}では、9th・13th（{n:A4}・{n:E5}）が自然。あえて♭9thを使うと、強い緊張が生まれます。"
+          ],
+          "example": { "columns": [{ "notes": ["B3", "F4", "Ab4", "Eb5"], "chord": "G7" }, { "chord": "Cm7" }] }
+        },
+        {
+          "title": "9thと♭9thを聴き比べる",
+          "text": [
+            "{c:G9}は明るく開いた響き、{c:G7b9}は暗く鋭い響きです。違いはたった半音、{n:A4}か{n:Ab4}かだけです。"
+          ],
+          "example": { "chords": ["G9", "G7b9"] }
+        }
+      ],
+      "quiz": [
+        { "type": "ninthEar", "params": { "roots": ["C", "D", "F", "G"] } },
+        { "type": "tension", "params": { "roots": ["C", "F", "G", "D", "Bb"], "codes": ["m9", "A9", "A11", "m13"] } },
+        { "type": "resolveTension", "params": { "keys": ["C", "F", "G", "Bb", "D", "Eb"] } }
+      ]
+    },
+    {
+      "id": "coltrane-changes",
+      "section": "上級",
+      "title": "コルトレーン・チェンジ",
+      "summary": "長3度ずつ、短い間に次々と転調する進行",
+      "cards": [
+        {
+          "title": "長3度でオクターブを3等分",
+          "text": [
+            "長3度を3回重ねると、ちょうど1オクターブになります。{n:C4}→{n:E4}→{n:G#4}→{n:C5}。",
+            "ジョン・コルトレーンは、この3つの点に調を置き、短い間に次々と転調する進行を作りました。"
+          ],
+          "example": { "seq": ["C4", "E4", "G#4", "C5"] }
+        },
+        {
+          "title": "コルトレーン・チェンジ",
+          "text": [
+            "{c:Cmaj7} → {c:Eb7} → {c:Abmaj7} → {c:B7} → {c:Emaj7}。",
+            "{n:C4}・{n:Ab3}・{n:E4}と長3度ずつ下がる3つのキーを、それぞれのV7でつないでいます。「ジャイアント・ステップス」の冒頭は、この形をキー{n:B3}から始めたものです。"
+          ],
+          "example": { "chords": ["Cmaj7", "Eb7", "Abmaj7", "B7", "Emaj7"] }
+        },
+        {
+          "title": "ツーファイブで慣れる",
+          "text": [
+            "いきなりは難しいので、まずはおなじみのツーファイブワンを長3度ずらしてつなぐ練習から始めます。",
+            "{c:Dm7} → {c:G7} → {c:Cmaj7} → {c:Bbm7} → {c:Eb7} → {c:Abmaj7}。"
+          ],
+          "example": { "chords": ["Dm7", "G7", "Cmaj7", "Bbm7", "Eb7", "Abmaj7"] }
+        }
+      ],
+      "quiz": [
+        { "type": "coltrane", "params": { "keys": ["C", "F", "Bb"] } }
+      ]
     }
   ]
 }

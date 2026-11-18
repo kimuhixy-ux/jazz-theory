@@ -17,7 +17,9 @@ export const INTERVALS = {
   P4: { name: '完全4度', letters: 3, semitones: 5 },
   d5: { name: '減5度', letters: 4, semitones: 6 },
   P5: { name: '完全5度', letters: 4, semitones: 7 },
+  m6: { name: '短6度', letters: 5, semitones: 8 },
   M6: { name: '長6度', letters: 5, semitones: 9 },
+  d7: { name: '減7度', letters: 6, semitones: 9 },
   m7: { name: '短7度', letters: 6, semitones: 10 },
   M7: { name: '長7度', letters: 6, semitones: 11 },
   m9: { name: '♭9th', letters: 8, semitones: 13 },
@@ -25,6 +27,7 @@ export const INTERVALS = {
   A9: { name: '♯9th', letters: 8, semitones: 15 },
   P11: { name: '11th', letters: 10, semitones: 17 },
   A11: { name: '♯11th', letters: 10, semitones: 18 },
+  m13: { name: '♭13th', letters: 12, semitones: 20 },
   M13: { name: '13th', letters: 12, semitones: 21 }
 };
 
@@ -35,7 +38,9 @@ export const QUALITIES = {
   7: { name: 'ドミナントセブンス', label: '7', tones: ['M3', 'P5', 'm7'] },
   m7: { name: 'マイナーセブンス', label: 'm7', tones: ['m3', 'P5', 'm7'] },
   m7b5: { name: 'マイナーセブン♭5', label: 'm7♭5', tones: ['m3', 'd5', 'm7'] },
-  '7b9': { name: 'セブン・フラットナイン', label: '7(♭9)', tones: ['M3', 'P5', 'm7', 'm9'] }
+  '7b9': { name: 'セブン・フラットナイン', label: '7(♭9)', tones: ['M3', 'P5', 'm7', 'm9'] },
+  9: { name: 'ナインス', label: '9', tones: ['M3', 'P5', 'm7', 'M9'] },
+  dim7: { name: 'ディミニッシュセブンス', label: 'dim7', tones: ['m3', 'd5', 'd7'] }
 };
 
 // コードに合わせる基本のスケール（ルートからの半音数。文字は1つずつ進む）

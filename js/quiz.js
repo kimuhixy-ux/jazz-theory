@@ -7,12 +7,14 @@ const DEGREE_NAMES = ['ルート', '3度', '5度', '7度'];
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
-// ♭のつくルートでm7♭5を作るとダブルフラットが出て初歩には難しいので、ルートを絞る
+// ♭のつくルートでm7♭5やdim7を作るとダブルフラットが出て読みにくいので、ルートを絞る
 const HALF_DIMINISHED_ROOTS = ['C', 'D', 'E', 'G', 'A', 'B'];
+const DIMINISHED_ROOTS = ['C#', 'E', 'F#', 'G#', 'A', 'B'];
+const RESTRICTED_ROOTS = { m7b5: HALF_DIMINISHED_ROOTS, dim7: DIMINISHED_ROOTS };
 
 function randomChord(roots, qualities) {
   const quality = pick(qualities);
-  const root = pick(quality === 'm7b5' ? HALF_DIMINISHED_ROOTS : roots);
+  const root = pick(RESTRICTED_ROOTS[quality] ?? roots);
   return makeChord(parseNote(root), quality);
 }
 
@@ -250,16 +252,17 @@ const stepUpEarGenerators = {
 };
 
 const stepUpReadGenerators = {
-  tension({ roots }) {
+  // codesを渡すと、7のコードの指定したテンション（オルタードなど）だけを出す
+  tension({ roots, codes }) {
     let chord;
     let code;
     let target;
     do {
-      chord = randomChord(roots, Object.keys(TENSIONS));
-      code = pick(TENSIONS[chord.quality]);
+      chord = randomChord(roots, codes ? ['7'] : Object.keys(TENSIONS));
+      code = pick(codes ?? TENSIONS[chord.quality]);
       target = addInterval(chord.root, code);
     } while (!isPlain(target));
-    const pool = [...chordNotes(chord).slice(1), ...['m9', 'M9', 'A9', 'P11', 'A11', 'M13'].map((x) => addInterval(chord.root, x))];
+    const pool = [...chordNotes(chord).slice(1), ...['m9', 'M9', 'A9', 'P11', 'A11', 'm13', 'M13'].map((x) => addInterval(chord.root, x))];
     return makeQuestion({
       prompt: `${c(chord)} の ${INTERVALS[code].name} の音は？`, correct: n(target), wrong: distinctWrong(pool, target, 3).map(n),
       explain: `9thは2度、11thは4度、13thは6度を1オクターブ上で数えた音。${c(chord)} の ${INTERVALS[code].name} は ${n(target)}。`,
@@ -336,7 +339,145 @@ const stepUpReadGenerators = {
   }
 };
 
-const GENERATORS = { ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators };
+// どちらか2択の聴き取り問題をまとめて作る
+function earPair({ prompt, options, explainOf }) {
+  const [answer, other] = shuffle(Object.keys(options));
+  return makeQuestion({
+    prompt, correct: answer, wrong: [other], explain: explainOf(options[answer]),
+    columns: options[answer].map(chordColumn), ear: true
+  });
+}
+
+const QUALITY_SET = ['m7', '7', 'maj7', 'm7b5'];
+
+// 空欄の位置のコードを、同じルートのほかの種類や進行中のほかのコードと紛らわせて問う
+function fillBlank({ prompt, chords, blankFrom, explain }) {
+  const k = blankFrom + Math.floor(Math.random() * (chords.length - blankFrom));
+  const answer = chords[k];
+  const shown = chords.map((x, i) => (i === k ? '？' : c(x))).join(' → ');
+  const wrong = QUALITY_SET.filter((q) => q !== answer.quality).map((q) => c(makeChord(answer.root, q)));
+  return makeQuestion({
+    prompt: `${prompt}　${shown}`, correct: c(answer), wrong: shuffle(wrong).slice(0, 3),
+    explain, columns: chords.map(chordColumn)
+  });
+}
+
+function subdominantMinorSet(root) {
+  return {
+    'IVm7': makeChord(addInterval(root, 'P4'), 'm7'),
+    '♭VII7': makeChord(addInterval(root, 'm7'), '7'),
+    '♭VImaj7': makeChord(addInterval(root, 'm6'), 'maj7'),
+    'IVmaj7': makeChord(addInterval(root, 'P4'), 'maj7'),
+    'V7': makeChord(addInterval(root, 'P5'), '7')
+  };
+}
+
+const advancedGenerators = {
+  passingDim({ keys }) {
+    const root = keyRoot(keys);
+    const scale = majorScale(root);
+    // I→II、II→III、IV→V、V→VI の間に、半音上げたルートのdim7をはさむ
+    const [from, to] = pick([[0, 1], [1, 2], [3, 4], [4, 5]]);
+    const fromChord = makeChord(scale[from], DIATONIC[from].quality);
+    const toChord = makeChord(scale[to], DIATONIC[to].quality);
+    const raised = transpose(scale[from], 0, 1);
+    const dim = makeChord(raised, 'dim7');
+    return makeQuestion({
+      prompt: `キー${n(root)} で ${c(fromChord)} と ${c(toChord)} の間に入るパッシング・ディミニッシュは？`, correct: c(dim),
+      wrong: [c(makeChord(raised, 'm7')), c(makeChord(raised, '7')), c(makeChord(scale[to], 'dim7'))],
+      explain: `${n(scale[from])} を半音上げた ${n(raised)} のdim7。ベースが ${n(scale[from])}→${n(raised)}→${n(scale[to])} と半音で上がります。`,
+      columns: [fromChord, dim, toChord].map(chordColumn)
+    });
+  },
+  dimAsDominant({ roots }) {
+    const dominant = makeChord(parseNote(pick(roots)), '7b9');
+    const dim = makeChord(addInterval(dominant.root, 'M3'), 'dim7');
+    return makeQuestion({
+      prompt: `${c(dim)} は、どの7(♭9)からルートを省いた形？`, correct: c(dominant),
+      wrong: ['M2', 'P4', 'P5'].map((x) => c(makeChord(addInterval(dominant.root, x), '7b9'))),
+      explain: `${c(dominant)} の3度・5度・7度・♭9th（${spell(chordNotes(dominant).slice(1))}）を並べると ${c(dim)}。`,
+      columns: [chordColumn(dominant), chordColumn(dim)]
+    });
+  },
+  subMinor({ keys }) {
+    const root = keyRoot(keys);
+    const set = subdominantMinorSet(root);
+    const roman = pick(['IVm7', '♭VII7', '♭VImaj7']);
+    const wrong = shuffle(Object.keys(set).filter((x) => x !== roman)).slice(0, 3);
+    return makeQuestion({
+      prompt: `キー${n(root)} の ${roman} は？`, correct: c(set[roman]), wrong: wrong.map((x) => c(set[x])),
+      explain: `${roman} は同じ主音のマイナーキーから借りたコード。キー${n(root)} では ${c(set[roman])}。`,
+      columns: [chordColumn(set[roman]), chordColumn(makeChord(root, 'maj7'))]
+    });
+  },
+  backdoorEar({ keys }) {
+    const root = keyRoot(keys);
+    const set = subdominantMinorSet(root);
+    const tonic = makeChord(root, 'maj7');
+    return earPair({
+      prompt: 'Imaj7 へ戻る前の2つのコードは、ツーファイブ？ バックドア？',
+      options: { 'ツーファイブ（IIm7 → V7）': twoFiveOne(root), 'バックドア（IVm7 → ♭VII7）': [set.IVm7, set['♭VII7'], tonic] },
+      explainOf: (chords) => chords.map(c).join(' → ')
+    });
+  },
+  relatedTwo({ roots }) {
+    const dominant = makeChord(parseNote(pick(roots)), '7');
+    const two = makeChord(addInterval(dominant.root, 'P5'), 'm7');
+    const target = addInterval(dominant.root, 'P4');
+    return makeQuestion({
+      prompt: `${c(dominant)} と組になるリレイテッドIIm7は？`, correct: c(two),
+      wrong: [c(makeChord(addInterval(dominant.root, 'M2'), 'm7')), c(makeChord(target, 'm7')), c(makeChord(two.root, 'm7b5'))],
+      explain: `${c(dominant)} の行き先 ${n(target)} から見たIIm7が ${c(two)}。ルートは ${c(dominant)} の完全5度上です。`,
+      columns: [chordColumn(two), chordColumn(dominant)]
+    });
+  },
+  chain({ keys }) {
+    const root = keyRoot(keys);
+    const scale = majorScale(root);
+    const chords = [makeChord(scale[2], 'm7'), makeChord(scale[5], '7'), makeChord(scale[1], 'm7'), makeChord(scale[4], '7'), makeChord(root, 'maj7')];
+    return fillBlank({
+      prompt: `キー${n(root)} のツーファイブの連鎖。？に入るコードは？`, chords, blankFrom: 0,
+      explain: `m7 → 7 の組が、完全5度ずつ下がりながら続きます：${line(chords)}`
+    });
+  },
+  ninthEar({ roots }) {
+    const root = parseNote(pick(roots));
+    return earPair({
+      prompt: '聴こえたのは 7(9)？ 7(♭9)？',
+      options: { '7(9)': [makeChord(root, '9')], '7(♭9)': [makeChord(root, '7b9')] },
+      explainOf: ([chord]) => `${c(chord)} ＝ ${spell(chordNotes(chord))}`
+    });
+  },
+  resolveTension({ keys }) {
+    const root = keyRoot(keys);
+    const dominant = makeChord(addInterval(root, 'P5'), '7');
+    const isMinor = Math.random() < 0.5;
+    const tonic = makeChord(root, isMinor ? 'm7' : 'maj7');
+    const pair = (codes) => codes.map((x) => n(addInterval(dominant.root, x))).join('・');
+    const natural = pair(['M9', 'M13']);
+    const altered = pair(['m9', 'm13']);
+    return makeQuestion({
+      prompt: `${c(dominant)} → ${c(tonic)}。${c(dominant)} に自然に合うテンションの組は？`,
+      correct: isMinor ? altered : natural, wrong: [isMinor ? natural : altered],
+      explain: isMinor ? `マイナーへ解決するときは ♭9th・♭13th（${altered}）。キーの音とそろいます。` : `メジャーへ解決するときは 9th・13th（${natural}）。キーの音とそろいます。`,
+      columns: [chordColumn(dominant), chordColumn(tonic)]
+    });
+  },
+  coltrane({ keys }) {
+    const root = keyRoot(keys);
+    // 長3度ずつ下がる3つのキー。それぞれの前に、そのキーのV7を置く
+    const second = addInterval(root, 'm6');
+    const third = addInterval(root, 'M3');
+    const fiveOf = (key) => makeChord(addInterval(key, 'P5'), '7');
+    const chords = [makeChord(root, 'maj7'), fiveOf(second), makeChord(second, 'maj7'), fiveOf(third), makeChord(third, 'maj7')];
+    return fillBlank({
+      prompt: `${n(root)} から始まるコルトレーン・チェンジ。？に入るコードは？`, chords, blankFrom: 1,
+      explain: `${n(root)}・${n(second)}・${n(third)} と長3度ずつ下がる3つのキーを、V7 → Imaj7 でつなぎます：${line(chords)}`
+    });
+  }
+};
+
+const GENERATORS = { ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators };
 
 // 単元に複数の出題形式があるときは、偏らないよう順番に混ぜてからシャッフルする
 export function buildQuiz(specs, length) {
