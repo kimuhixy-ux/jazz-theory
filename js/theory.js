@@ -17,6 +17,7 @@ export const INTERVALS = {
   P4: { name: '完全4度', letters: 3, semitones: 5 },
   d5: { name: '減5度', letters: 4, semitones: 6 },
   P5: { name: '完全5度', letters: 4, semitones: 7 },
+  A5: { name: '増5度', letters: 4, semitones: 8 },
   m6: { name: '短6度', letters: 5, semitones: 8 },
   M6: { name: '長6度', letters: 5, semitones: 9 },
   d7: { name: '減7度', letters: 6, semitones: 9 },
@@ -43,17 +44,23 @@ export const QUALITIES = {
   dim7: { name: 'ディミニッシュセブンス', label: 'dim7', tones: ['m3', 'd5', 'd7'] },
   '7sus4': { name: 'セブン・サスフォー', label: '7sus4', tones: ['P4', 'P5', 'm7'] },
   mMaj7: { name: 'マイナー・メジャーセブンス', label: 'm(maj7)', tones: ['m3', 'P5', 'M7'] },
-  m6: { name: 'マイナーシックス', label: 'm6', tones: ['m3', 'P5', 'M6'] }
+  m6: { name: 'マイナーシックス', label: 'm6', tones: ['m3', 'P5', 'M6'] },
+  '7#5': { name: 'セブン・シャープファイブ', label: '7(♯5)', tones: ['M3', 'A5', 'm7'] }
 };
 
-// コードに合わせる基本のスケール（ルートからの半音数。文字は1つずつ進む）
+// コードに合わせるスケール（ルートからの半音数）。lettersがなければ文字は1つずつ進む。
+// オルタードなどはジャズの慣習どおり♯9thを短3度の文字で書くため、文字の進み方を別に持たせる
 export const MODES = {
   ionian: { name: 'イオニアン', semitones: [0, 2, 4, 5, 7, 9, 11] },
   dorian: { name: 'ドリアン', semitones: [0, 2, 3, 5, 7, 9, 10] },
   mixolydian: { name: 'ミクソリディアン', semitones: [0, 2, 4, 5, 7, 9, 10] },
   locrian: { name: 'ロクリアン', semitones: [0, 1, 3, 5, 6, 8, 10] },
   lydian: { name: 'リディアン', semitones: [0, 2, 4, 6, 7, 9, 11] },
-  lydianDominant: { name: 'リディアン・ドミナント', semitones: [0, 2, 4, 6, 7, 9, 10] }
+  lydianDominant: { name: 'リディアン・ドミナント', semitones: [0, 2, 4, 6, 7, 9, 10] },
+  melodicMinor: { name: 'メロディックマイナー', semitones: [0, 2, 3, 5, 7, 9, 11] },
+  altered: { name: 'オルタード', semitones: [0, 1, 3, 4, 6, 8, 10], letters: [0, 1, 2, 2, 3, 5, 6] },
+  halfWhole: { name: 'コンビネーション・オブ・ディミニッシュ', semitones: [0, 1, 3, 4, 6, 7, 9, 10], letters: [0, 1, 2, 2, 3, 4, 5, 6] },
+  wholeTone: { name: 'ホールトーン', semitones: [0, 2, 4, 6, 8, 10], letters: [0, 1, 2, 3, 4, 6] }
 };
 
 export const DIATONIC = [
@@ -122,7 +129,8 @@ export function majorScale(root) {
 }
 
 export function modeScale(root, modeKey) {
-  return MODES[modeKey].semitones.map((semitones, i) => transpose(root, i, semitones));
+  const { semitones, letters } = MODES[modeKey];
+  return semitones.map((step, i) => transpose(root, letters ? letters[i] : i, step));
 }
 
 export function parseChord(text) {

@@ -10,7 +10,9 @@ const pick = (list) => list[Math.floor(Math.random() * list.length)];
 // ♭のつくルートでm7♭5やdim7を作るとダブルフラットが出て読みにくいので、ルートを絞る
 const HALF_DIMINISHED_ROOTS = ['C', 'D', 'E', 'G', 'A', 'B'];
 const DIMINISHED_ROOTS = ['C#', 'E', 'F#', 'G#', 'A', 'B'];
-const RESTRICTED_ROOTS = { m7b5: HALF_DIMINISHED_ROOTS, dim7: DIMINISHED_ROOTS };
+// 7(♯5)は♯のつくルートだとアルト・テナーでダブルシャープになる
+const AUGMENTED_ROOTS = ['C', 'Eb', 'F', 'G', 'Ab', 'Bb'];
+const RESTRICTED_ROOTS = { m7b5: HALF_DIMINISHED_ROOTS, dim7: DIMINISHED_ROOTS, '7#5': AUGMENTED_ROOTS };
 
 function randomChord(roots, qualities) {
   const quality = pick(qualities);
@@ -237,10 +239,11 @@ const stepUpEarGenerators = {
       columns: [two, middle, one].map(chordColumn), ear: true
     });
   },
-  modeEar({ list }) {
+  // qualityを渡すと、どのスケールでも同じコードを鳴らす（コードの違いで答えがわからないように）
+  modeEar({ list, quality }) {
     const mode = pick(list);
     const root = parseNote(pick(['C4', 'D4', 'F4', 'G3']));
-    const chord = makeChord(root, QUALITY_FOR_MODE[mode]);
+    const chord = makeChord(root, quality ?? QUALITY_FOR_MODE[mode]);
     const scale = modeScale(chord.root, mode);
     return makeQuestion({
       prompt: 'コードのあとにスケールを鳴らします。どのスケール？', correct: MODES[mode].name,
@@ -591,8 +594,75 @@ const developGenerators = {
   }
 };
 
+// スケールの特徴をひと言で添えて、覚える手がかりにする
+const SCALE_HINT = {
+  dorian: 'ナチュラルマイナーの6番目を半音上げた形',
+  mixolydian: 'メジャースケールの7番目を半音下げた形',
+  lydianDominant: 'ミクソリディアンの4番目を半音上げた形',
+  melodicMinor: 'ドリアンの7番目を半音上げた形',
+  altered: 'ルート・3度・7度以外をすべて半音ずらした形',
+  halfWhole: '半音・全音を交互にくり返す8音の形',
+  wholeTone: '全音だけでできた6音の形'
+};
+
+// 7のコードで使いたいテンションと、それを含むスケール
+const DOMINANT_SCALES = {
+  mixolydian: ['M9', 'M13'],
+  lydianDominant: ['M9', 'A11', 'M13'],
+  halfWhole: ['m9', 'A9', 'M13'],
+  altered: ['m9', 'A9', 'm13'],
+  wholeTone: ['M9', 'A11', 'A5']
+};
+const tensionLabel = (codes) => codes.map((x) => (x === 'A5' ? '♯5' : INTERVALS[x].name)).join('・');
+
+// 求めるテンションをすべて含むスケールは正解とも言えるので、不正解の選択肢から外す
+function containsAll(root, mode, codes) {
+  const pitches = new Set(modeScale(root, mode).map((x) => noteToMidi(x) % 12));
+  return codes.every((x) => pitches.has(noteToMidi(addInterval(root, x)) % 12));
+}
+
+const applyGenerators = {
+  whichScale({ roots, modes, quality }) {
+    const mode = pick(modes);
+    const chord = makeChord(parseNote(pick(roots)), quality);
+    const scale = modeScale(chord.root, mode);
+    return makeQuestion({
+      prompt: `${c(chord)} の上で ${spell(scale)}。このスケールは？`, correct: MODES[mode].name,
+      wrong: modes.filter((x) => x !== mode).map((x) => MODES[x].name),
+      explain: `${MODES[mode].name}は${SCALE_HINT[mode]}です。`,
+      columns: [chordColumn(chord), ...scale.map(single)]
+    });
+  },
+  notInScale({ roots, mode, quality, outside }) {
+    const chord = makeChord(parseNote(pick(roots)), quality);
+    const scale = modeScale(chord.root, mode);
+    const answer = addInterval(chord.root, pick(outside));
+    const wrong = distinctWrong(scale.slice(1), answer, 3);
+    return makeQuestion({
+      prompt: `${n(chord.root)} の${MODES[mode].name}に含まれない音は？`, correct: n(answer), wrong: wrong.map(n),
+      explain: `${n(chord.root)} の${MODES[mode].name}：${spell(scale)}。${n(answer)} は含まれません。`,
+      columns: [chordColumn(chord), ...scale.map(single)]
+    });
+  },
+  tensionToScale({ roots }) {
+    const mode = pick(Object.keys(DOMINANT_SCALES));
+    const chord = makeChord(parseNote(pick(roots)), '7');
+    const scale = modeScale(chord.root, mode);
+    const codes = DOMINANT_SCALES[mode];
+    const others = Object.keys(DOMINANT_SCALES).filter((x) => x !== mode && !containsAll(chord.root, x, codes));
+    const wrong = shuffle(others).slice(0, 3);
+    return makeQuestion({
+      prompt: `${c(chord)} で ${tensionLabel(codes)} を使いたい。合うスケールは？`, correct: MODES[mode].name,
+      wrong: wrong.map((x) => MODES[x].name),
+      explain: `${MODES[mode].name}（${SCALE_HINT[mode]}）：${spell(scale)}`,
+      columns: [chordColumn(chord), ...scale.map(single)]
+    });
+  }
+};
+
 const GENERATORS = {
-  ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators, ...developGenerators
+  ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators, ...developGenerators,
+  ...applyGenerators
 };
 
 // 単元に複数の出題形式があるときは、偏らないよう順番に混ぜてからシャッフルする

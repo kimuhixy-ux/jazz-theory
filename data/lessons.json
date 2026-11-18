@@ -930,6 +930,189 @@
         { "type": "quality", "params": { "list": ["m7", "mMaj7", "m6"] } },
         { "type": "cliche", "params": { "roots": ["C", "D", "E", "G", "A"] } }
       ]
+    },
+    {
+      "id": "melodic-minor",
+      "section": "応用",
+      "title": "メロディックマイナー",
+      "summary": "ドリアンの7番目を半音上げた、ジャズのマイナースケール",
+      "cards": [
+        {
+          "title": "7番目を半音上げる",
+          "text": [
+            "{n:C4}ドリアン（{n:C4}・{n:D4}・{n:Eb4}・{n:F4}・{n:G4}・{n:A4}・{n:Bb4}）の7番目を半音上げると、{n:C4}メロディックマイナーになります。",
+            "{n:C4}・{n:D4}・{n:Eb4}・{n:F4}・{n:G4}・{n:A4}・{n:B4}。マイナーなのに、上のほうはメジャーのように聴こえます。"
+          ],
+          "example": { "seq": ["C4", "D4", "Eb4", "F4", "G4", "A4", "B4", "C5"] }
+        },
+        {
+          "title": "m6 と m(maj7) に合わせる",
+          "text": [
+            "メロディックマイナーには長6度と長7度があるので、{c:Cm6}や{c:CmMaj7}にぴったり合います。",
+            "ラインクリシェの単元で出てきた2つのコードです。"
+          ],
+          "example": { "chords": ["Cm6", "CmMaj7"] }
+        },
+        {
+          "title": "ほかのスケールの親になる",
+          "text": [
+            "メロディックマイナーを4番目の音から並べるとリディアン・ドミナント、7番目の音から並べるとオルタードになります。",
+            "このあとの単元で使う、ドミナントのための大事なスケールの元になっています。"
+          ],
+          "example": { "columns": [{ "notes": ["C4", "Eb4", "G4", "B4"], "chord": "CmMaj7" }] }
+        }
+      ],
+      "quiz": [
+        { "type": "modeEar", "params": { "list": ["dorian", "melodicMinor"], "quality": "m6" } },
+        { "type": "whichScale", "params": { "roots": ["C", "D", "F", "G", "A"], "modes": ["dorian", "melodicMinor"], "quality": "m6" } },
+        { "type": "notInScale", "params": { "roots": ["C", "D", "F", "G", "A"], "mode": "melodicMinor", "quality": "mMaj7", "outside": ["m7", "m6", "m2"] } }
+      ]
+    },
+    {
+      "id": "altered-scale",
+      "section": "応用",
+      "title": "オルタード・スケール",
+      "summary": "♭9th・♯9th・♯11th・♭13th をすべて含む、いちばん緊張の強いスケール",
+      "cards": [
+        {
+          "title": "変化音を全部入れる",
+          "text": [
+            "{n:C4}・{n:Db4}・{n:Eb4}・{n:E4}・{n:F#4}・{n:Ab4}・{n:Bb4}。",
+            "ルート・3度・7度はそのままで、9thと13thと5度をすべて半音ずらしています。♯9thは慣習で短3度の{n:Eb4}と書きます。"
+          ],
+          "example": { "seq": ["C4", "Db4", "Eb4", "E4", "F#4", "Ab4", "Bb4", "C5"] }
+        },
+        {
+          "title": "7(alt) に使う",
+          "text": [
+            "{c:C7} → {c:Fm7}のようにマイナーへ解決するときや、強い緊張がほしいときに使います。",
+            "コード譜で C7alt と書かれていたら、このスケールの出番です。"
+          ],
+          "example": { "columns": [{ "notes": ["C4", "E4", "Bb4", "Db5", "Ab5"], "chord": "C7" }, { "chord": "Fm7" }] }
+        },
+        {
+          "title": "半音上のメロディックマイナー",
+          "text": [
+            "{n:C4}のオルタードは、半音上の{n:Db4}メロディックマイナーを{n:C4}から並べたものと同じ音です。",
+            "「7のコードの半音上のメロディックマイナー」と覚えると、すぐに音が出せます。"
+          ],
+          "example": { "seq": ["C4", "Db4", "Eb4", "E4", "F#4", "Ab4", "Bb4", "C5"] }
+        }
+      ],
+      "quiz": [
+        { "type": "modeEar", "params": { "list": ["mixolydian", "altered"], "quality": "7" } },
+        { "type": "whichScale", "params": { "roots": ["C", "D", "F", "G", "Bb"], "modes": ["mixolydian", "lydianDominant", "altered"], "quality": "7" } },
+        { "type": "notInScale", "params": { "roots": ["C", "D", "F", "G", "Bb"], "mode": "altered", "quality": "7", "outside": ["P5", "M9", "M13"] } }
+      ]
+    },
+    {
+      "id": "half-whole",
+      "section": "応用",
+      "title": "コンビネーション・オブ・ディミニッシュ",
+      "summary": "半音・全音を交互にくり返す8音のスケール",
+      "cards": [
+        {
+          "title": "半音・全音のくり返し",
+          "text": [
+            "{n:C4}・{n:Db4}・{n:Eb4}・{n:E4}・{n:F#4}・{n:G4}・{n:A4}・{n:Bb4}。",
+            "ルートから半音・全音・半音・全音…と交互に進む8音のスケールです。略してコンディミと呼ばれます。"
+          ],
+          "example": { "seq": ["C4", "Db4", "Eb4", "E4", "F#4", "G4", "A4", "Bb4", "C5"] }
+        },
+        {
+          "title": "7(♭9,13) に使う",
+          "text": [
+            "♭9th・♯9th と一緒に、ふつうの5度と13thも含むのが特徴です。オルタードとの違いはここ。",
+            "{c:C7}の上で{n:A4}（13th）と{n:Db5}（♭9th）を同時に鳴らす響きは、コンディミならではです。"
+          ],
+          "example": { "columns": [{ "notes": ["C4", "E4", "Bb4", "Db5", "A5"], "chord": "C7" }] }
+        },
+        {
+          "title": "dim7 の間を埋めたもの",
+          "text": [
+            "{c:C7b9}のルートを抜くと{c:Edim7}。コンディミは、この dim7 の音と音の間を1つずつ埋めたスケールです。",
+            "dim7と同じく短3度ごとに同じ形がくり返すので、{n:C4}・{n:Eb4}・{n:F#4}・{n:A4}の4つの7のコードで同じ音を使えます。"
+          ],
+          "example": { "chords": ["C7b9", "Edim7"] }
+        }
+      ],
+      "quiz": [
+        { "type": "modeEar", "params": { "list": ["mixolydian", "halfWhole"], "quality": "7" } },
+        { "type": "whichScale", "params": { "roots": ["C", "D", "F", "G", "Bb"], "modes": ["mixolydian", "altered", "halfWhole"], "quality": "7" } },
+        { "type": "notInScale", "params": { "roots": ["C", "D", "F", "G", "Bb"], "mode": "halfWhole", "quality": "7", "outside": ["M9", "P4", "m13"] } }
+      ]
+    },
+    {
+      "id": "whole-tone",
+      "section": "応用",
+      "title": "ホールトーン",
+      "summary": "全音だけでできた6音のスケールと、7(♯5)",
+      "cards": [
+        {
+          "title": "全音だけの6音",
+          "text": [
+            "{n:C4}・{n:D4}・{n:E4}・{n:F#4}・{n:G#4}・{n:Bb4}。どこも全音なので、6つの音でオクターブに戻ります。",
+            "どの音から始めても同じ形なので、夢の中のような、行き先のない響きになります。"
+          ],
+          "example": { "seq": ["C4", "D4", "E4", "F#4", "G#4", "Bb4", "C5"] }
+        },
+        {
+          "title": "7(♯5) のコード",
+          "text": [
+            "{c:C7#5}は、{c:C7}の5度を半音上げたコード。{n:C4}・{n:E4}・{n:G#4}・{n:Bb4}。",
+            "この4音はすべてホールトーンに含まれます。だから7(♯5)にはホールトーンが合います。"
+          ],
+          "example": { "chords": ["C7", "C7#5"] }
+        },
+        {
+          "title": "モンクの好んだ響き",
+          "text": [
+            "セロニアス・モンクは、ホールトーンを下りる速いフレーズをよく使いました。",
+            "{c:C7#5} → {c:Fmaj7}のように、♯5の{n:G#4}が{n:A4}へ半音上がって解決します。"
+          ],
+          "example": { "chords": ["C7#5", "Fmaj7"] }
+        }
+      ],
+      "quiz": [
+        { "type": "quality", "params": { "list": ["7", "7#5"] } },
+        { "type": "whichScale", "params": { "roots": ["C", "Eb", "F", "G", "Bb"], "modes": ["wholeTone", "mixolydian", "altered"], "quality": "7#5" } },
+        { "type": "notInScale", "params": { "roots": ["C", "Eb", "F", "G", "Bb"], "mode": "wholeTone", "quality": "7#5", "outside": ["P5", "P4", "M7"] } }
+      ]
+    },
+    {
+      "id": "dominant-scales",
+      "section": "応用",
+      "title": "テンションからスケールを選ぶ",
+      "summary": "7のコードで使いたい音から、スケールを決める",
+      "cards": [
+        {
+          "title": "5つのドミナント・スケール",
+          "text": [
+            "ミクソリディアン：9th・13th。リディアン・ドミナント：9th・♯11th・13th。",
+            "コンディミ：♭9th・♯9th・13th。オルタード：♭9th・♯9th・♭13th。ホールトーン：9th・♯11th・♯5。"
+          ],
+          "example": { "chords": ["C7"] }
+        },
+        {
+          "title": "行き先で選ぶ",
+          "text": [
+            "メジャーへ解決するなら、まずミクソリディアン。マイナーへ解決するなら、♭9thと♭13thを含むオルタードかコンディミ。",
+            "解決しない7のコード（裏コードやブルースのIV7）なら、リディアン・ドミナントが似合います。"
+          ],
+          "example": { "chords": ["C7", "Fmaj7", "C7", "Fm7"] }
+        },
+        {
+          "title": "コード譜のテンションを読む",
+          "text": [
+            "C7(♭9,13) と書かれていたらコンディミ、C7(♯11) ならリディアン・ドミナント、C7(♯5) ならホールトーン。",
+            "書かれたテンションをすべて含むスケールを選べば、外れることはありません。"
+          ],
+          "example": { "columns": [{ "notes": ["C4", "E4", "Bb4", "Db5", "A5"], "chord": "C7" }] }
+        }
+      ],
+      "quiz": [
+        { "type": "tensionToScale", "params": { "roots": ["C", "Eb", "F", "G", "Bb"] } }
+      ]
     }
   ]
 }
