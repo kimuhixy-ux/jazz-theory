@@ -6,6 +6,7 @@ const BOTTOM_LINE = 30; // 下の線 E4 の通し番号
 const TOP_LINE = 38; // 上の線 F5 の通し番号
 const CLEF_WIDTH = 44;
 const COLUMN_WIDTH = 58;
+const LABEL_CHAR_WIDTH = 11; // コード名1文字ぶんのおおよその幅
 const LABEL_HEIGHT = 24;
 const ACCIDENTALS = { 1: '♯', 2: '♯♯', '-1': '♭', '-2': '♭♭' };
 
@@ -66,13 +67,16 @@ export function drawStaff(columns) {
   const high = Math.max(TOP_LINE + 3, ...indices);
   const low = Math.min(BOTTOM_LINE - 4, ...indices);
   const yOf = (d) => LABEL_HEIGHT + 6 + (high - d) * STEP;
-  const width = CLEF_WIDTH + columns.length * COLUMN_WIDTH + 6;
+  // 「G7(♭9)」のような長いコード名どうしが重ならないよう、列の幅を名前に合わせて広げる
+  const longest = Math.max(0, ...columns.map((column) => (column.label || '').length));
+  const columnWidth = Math.max(COLUMN_WIDTH, longest * LABEL_CHAR_WIDTH + 8);
+  const width = CLEF_WIDTH + columns.length * columnWidth + 6;
   const height = yOf(low) + 10;
   const description = columns.map((column) => column.label || column.notes.map(noteName).join(' ')).join('、');
   const svg = svgEl('svg', { viewBox: `0 0 ${width} ${height}`, class: 'staff', role: 'img', 'aria-label': description });
   // 音数の少ない譜面が画面いっぱいに拡大されすぎないよう上限を決める
   svg.style.maxWidth = `${Math.round(width * 1.35)}px`;
   drawLines(svg, yOf, width);
-  columns.forEach((column, i) => drawColumn(svg, column, CLEF_WIDTH + i * COLUMN_WIDTH + COLUMN_WIDTH / 2, yOf));
+  columns.forEach((column, i) => drawColumn(svg, column, CLEF_WIDTH + i * columnWidth + columnWidth / 2, yOf));
   return svg;
 }

@@ -99,8 +99,16 @@ function renderNotationBar() {
 
 function renderHome() {
   view.append(el('p', 'lead', '初歩から順に、読んで・聴いて・答えて覚えます。'));
-  const list = el('ol', 'unit-list');
+  let list = null;
+  let section = null;
   state.units.forEach((unit, i) => {
+    // 既存の単元に手を入れずに済むよう、sectionのない単元は「初歩」とみなす
+    const unitSection = unit.section ?? '初歩';
+    if (unitSection !== section) {
+      section = unitSection;
+      list = el('ol', 'unit-list');
+      view.append(el('h2', 'section-title', section), list);
+    }
     const item = el('li');
     const best = state.progress[unit.id];
     const row = button('unit-button', '', () => { location.hash = `#/${unit.id}`; });
@@ -110,7 +118,6 @@ function renderHome() {
     item.append(row);
     list.append(item);
   });
-  view.append(list);
 }
 
 function renderCard(card) {

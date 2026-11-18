@@ -1,6 +1,6 @@
 import {
-  INTERVALS, QUALITIES, DIATONIC, parseNote, noteToText, chordToText, chordNotes,
-  addInterval, transpose, placeRoot, majorScale, makeChord, twoFiveOne
+  INTERVALS, QUALITIES, DIATONIC, MODES, NOTATIONS, parseNote, noteToText, noteToMidi, chordToText, chordNotes,
+  addInterval, transpose, placeRoot, majorScale, modeScale, makeChord, twoFiveOne, minorTwoFiveOne, toWritten
 } from './theory.js';
 
 const DEGREE_NAMES = ['ルート', '3度', '5度', '7度'];
@@ -184,7 +184,159 @@ const readGenerators = {
   }
 };
 
-const GENERATORS = { ...earGenerators, ...readGenerators };
+const TENSIONS = { maj7: ['M9', 'A11', 'M13'], 7: ['M9', 'm9', 'A9', 'M13'], m7: ['M9', 'P11'] };
+const SCALE_FOR = { maj7: 'ionian', m7: 'dorian', 7: 'mixolydian', m7b5: 'locrian' };
+const QUALITY_FOR_MODE = { ionian: 'maj7', dorian: 'm7', mixolydian: '7', locrian: 'm7b5' };
+const BLUES_FORM = [['I7'], ['IV7'], ['I7'], ['I7'], ['IV7'], ['IV7'], ['I7'], ['VI7'], ['IIm7'], ['V7'], ['I7', 'VI7'], ['IIm7', 'V7']];
+const BLUES_ROMANS = { I7: [null, '7'], IV7: ['P4', '7'], V7: ['P5', '7'], VI7: ['M6', '7'], IIm7: ['M2', 'm7'] };
+
+const line = (chords) => chords.map(c).join(' → ');
+
+// アルト・テナーに直したときにダブルシャープ・ダブルフラットになる音は、出題に使わない
+const isPlain = (note) => Object.keys(NOTATIONS).every((key) => Math.abs(toWritten(note, key).acc) < 2);
+
+// 同じ高さの音が選択肢に並ばないよう、音の高さ（12で割った余り）が違うものだけ選ぶ
+function distinctWrong(pool, correct, count) {
+  const used = new Set([noteToMidi(correct) % 12]);
+  const result = [];
+  for (const note of shuffle(pool.filter(isPlain))) {
+    const pitchClass = noteToMidi(note) % 12;
+    if (used.has(pitchClass)) continue;
+    used.add(pitchClass);
+    result.push(note);
+  }
+  return result.slice(0, count);
+}
+
+function bluesChord(keyRootNote, roman) {
+  const [interval, quality] = BLUES_ROMANS[roman];
+  return makeChord(interval ? addInterval(keyRootNote, interval) : keyRootNote, quality);
+}
+
+const stepUpEarGenerators = {
+  twoFiveMode({ keys }) {
+    const root = keyRoot(keys);
+    const isMinor = Math.random() < 0.5;
+    const answer = isMinor ? 'マイナー' : 'メジャー';
+    const chords = isMinor ? minorTwoFiveOne(root) : twoFiveOne(root);
+    return makeQuestion({
+      prompt: '聴こえたのはどちらのツーファイブワン？', correct: answer, wrong: [isMinor ? 'メジャー' : 'マイナー'],
+      explain: `${answer}：${line(chords)}`, columns: chords.map(chordColumn), ear: true
+    });
+  },
+  subEar({ keys }) {
+    const [two, five, one] = twoFiveOne(keyRoot(keys));
+    const isSub = Math.random() < 0.5;
+    const middle = isSub ? makeChord(addInterval(five.root, 'd5'), '7') : five;
+    const answer = isSub ? '裏コード（♭II7）' : 'V7';
+    return makeQuestion({
+      prompt: '真ん中のコードは V7？ 裏コード？', correct: answer, wrong: [isSub ? 'V7' : '裏コード（♭II7）'],
+      explain: `${line([two, middle, one])}。裏コードはベースが半音ずつ下がります。`,
+      columns: [two, middle, one].map(chordColumn), ear: true
+    });
+  },
+  modeEar({ list }) {
+    const mode = pick(list);
+    const root = parseNote(pick(['C4', 'D4', 'F4', 'G3']));
+    const chord = makeChord(root, QUALITY_FOR_MODE[mode]);
+    const scale = modeScale(chord.root, mode);
+    return makeQuestion({
+      prompt: 'コードのあとにスケールを鳴らします。どのスケール？', correct: MODES[mode].name,
+      wrong: list.filter((x) => x !== mode).map((x) => MODES[x].name),
+      explain: `${c(chord)} の上の${MODES[mode].name}：${spell(scale)}`,
+      columns: [chordColumn(chord), ...scale.map(single)], ear: true
+    });
+  }
+};
+
+const stepUpReadGenerators = {
+  tension({ roots }) {
+    let chord;
+    let code;
+    let target;
+    do {
+      chord = randomChord(roots, Object.keys(TENSIONS));
+      code = pick(TENSIONS[chord.quality]);
+      target = addInterval(chord.root, code);
+    } while (!isPlain(target));
+    const pool = [...chordNotes(chord).slice(1), ...['m9', 'M9', 'A9', 'P11', 'A11', 'M13'].map((x) => addInterval(chord.root, x))];
+    return makeQuestion({
+      prompt: `${c(chord)} の ${INTERVALS[code].name} の音は？`, correct: n(target), wrong: distinctWrong(pool, target, 3).map(n),
+      explain: `9thは2度、11thは4度、13thは6度を1オクターブ上で数えた音。${c(chord)} の ${INTERVALS[code].name} は ${n(target)}。`,
+      columns: [{ notes: [...chordNotes(chord), target], chord }]
+    });
+  },
+  minorTwoFive({ keys }) {
+    const root = keyRoot(keys);
+    const chords = minorTwoFiveOne(root);
+    const broken = [makeChord(chords[0].root, 'm7'), makeChord(chords[1].root, 'maj7'), chords[2]];
+    return makeQuestion({
+      prompt: `キー${n(root)}マイナーのツーファイブワンは？`, correct: line(chords),
+      wrong: [line(twoFiveOne(root)), line(minorTwoFiveOne(addInterval(root, 'P4'))), line(broken)],
+      explain: '2番目の音の m7♭5 → 5番目の音の 7(♭9) → 1番目の音の m7 です。', columns: chords.map(chordColumn)
+    });
+  },
+  secondary({ keys }) {
+    const root = keyRoot(keys);
+    const scale = majorScale(root);
+    const targets = [1, 2, 3, 4, 5];
+    const i = pick(targets);
+    const target = makeChord(scale[i], DIATONIC[i].quality);
+    const dominantOf = (j) => makeChord(addInterval(scale[j], 'P5'), '7');
+    const dominant = dominantOf(i);
+    const others = shuffle(targets.filter((j) => j !== i)).slice(0, 2).map(dominantOf);
+    return makeQuestion({
+      prompt: `キー${n(root)} で ${c(target)}（${DIATONIC[i].roman}）へ向かうセカンダリードミナントは？`,
+      correct: c(dominant), wrong: [c(makeChord(dominant.root, 'm7')), ...others.map(c)],
+      explain: `${c(target)} のルート ${n(scale[i])} の完全5度上 ${n(dominant.root)} に7のコードを作ると ${c(dominant)}。`,
+      columns: [chordColumn(dominant), chordColumn(target)]
+    });
+  },
+  tritoneSub({ roots }) {
+    const dominant = makeChord(parseNote(pick(roots)), '7');
+    const sub = makeChord(addInterval(dominant.root, 'd5'), '7');
+    if (Math.random() < 0.5) {
+      return makeQuestion({
+        prompt: `${c(dominant)} の裏コードは？`, correct: c(sub),
+        wrong: ['m3', 'M2', 'P4'].map((x) => c(makeChord(addInterval(dominant.root, x), '7'))),
+        explain: `ルート ${n(dominant.root)} から半音6つ離れた ${n(sub.root)} の7のコードが裏コードです。`,
+        columns: [chordColumn(dominant), chordColumn(sub)]
+      });
+    }
+    const third = chordNotes(dominant)[1];
+    return makeQuestion({
+      prompt: `${c(dominant)} の3度 ${n(third)} は、裏コード ${c(sub)} では何度の音？`, correct: '7度', wrong: ['ルート', '3度', '5度'],
+      explain: `${n(third)} と ${c(sub)} の7度 ${n(chordNotes(sub)[3])} は同じ高さ（異名同音）。3度と7度が入れ替わります。`,
+      columns: [guideColumn(dominant), guideColumn(sub)]
+    });
+  },
+  blues({ keys }) {
+    const root = keyRoot(keys);
+    const bar = Math.floor(Math.random() * 10);
+    const roman = BLUES_FORM[bar][0];
+    const wrongRomans = shuffle(Object.keys(BLUES_ROMANS).filter((x) => x !== roman)).slice(0, 3);
+    const row = BLUES_FORM.slice(Math.floor(bar / 4) * 4, Math.floor(bar / 4) * 4 + 4).flat();
+    return makeQuestion({
+      prompt: `キー${n(root)} のジャズブルースで、${bar + 1}小節目のコードは？`, correct: c(bluesChord(root, roman)),
+      wrong: wrongRomans.map((x) => c(bluesChord(root, x))),
+      explain: `${bar + 1}小節目は ${roman}。譜例は${Math.floor(bar / 4) * 4 + 1}〜${Math.floor(bar / 4) * 4 + 4}小節目です。`,
+      columns: row.map((x) => chordColumn(bluesChord(root, x)))
+    });
+  },
+  chordScale({ roots }) {
+    const chord = randomChord(roots, Object.keys(SCALE_FOR));
+    const mode = SCALE_FOR[chord.quality];
+    const scale = modeScale(chord.root, mode);
+    return makeQuestion({
+      prompt: `${c(chord)} に合わせる基本のスケールは？`, correct: MODES[mode].name,
+      wrong: Object.values(SCALE_FOR).filter((x) => x !== mode).map((x) => MODES[x].name),
+      explain: `${c(chord)} には${MODES[mode].name}：${spell(scale)}`,
+      columns: [chordColumn(chord), ...scale.map(single)]
+    });
+  }
+};
+
+const GENERATORS = { ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators };
 
 // 単元に複数の出題形式があるときは、偏らないよう順番に混ぜてからシャッフルする
 export function buildQuiz(specs, length) {

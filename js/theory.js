@@ -10,14 +10,22 @@ export const NOTATIONS = {
 };
 
 export const INTERVALS = {
+  m2: { name: '短2度', letters: 1, semitones: 1 },
   M2: { name: '長2度', letters: 1, semitones: 2 },
   m3: { name: '短3度', letters: 2, semitones: 3 },
   M3: { name: '長3度', letters: 2, semitones: 4 },
   P4: { name: '完全4度', letters: 3, semitones: 5 },
   d5: { name: '減5度', letters: 4, semitones: 6 },
   P5: { name: '完全5度', letters: 4, semitones: 7 },
+  M6: { name: '長6度', letters: 5, semitones: 9 },
   m7: { name: '短7度', letters: 6, semitones: 10 },
-  M7: { name: '長7度', letters: 6, semitones: 11 }
+  M7: { name: '長7度', letters: 6, semitones: 11 },
+  m9: { name: '♭9th', letters: 8, semitones: 13 },
+  M9: { name: '9th', letters: 8, semitones: 14 },
+  A9: { name: '♯9th', letters: 8, semitones: 15 },
+  P11: { name: '11th', letters: 10, semitones: 17 },
+  A11: { name: '♯11th', letters: 10, semitones: 18 },
+  M13: { name: '13th', letters: 12, semitones: 21 }
 };
 
 export const QUALITIES = {
@@ -26,7 +34,16 @@ export const QUALITIES = {
   maj7: { name: 'メジャーセブンス', label: 'maj7', tones: ['M3', 'P5', 'M7'] },
   7: { name: 'ドミナントセブンス', label: '7', tones: ['M3', 'P5', 'm7'] },
   m7: { name: 'マイナーセブンス', label: 'm7', tones: ['m3', 'P5', 'm7'] },
-  m7b5: { name: 'マイナーセブン♭5', label: 'm7♭5', tones: ['m3', 'd5', 'm7'] }
+  m7b5: { name: 'マイナーセブン♭5', label: 'm7♭5', tones: ['m3', 'd5', 'm7'] },
+  '7b9': { name: 'セブン・フラットナイン', label: '7(♭9)', tones: ['M3', 'P5', 'm7', 'm9'] }
+};
+
+// コードに合わせる基本のスケール（ルートからの半音数。文字は1つずつ進む）
+export const MODES = {
+  ionian: { name: 'イオニアン', semitones: [0, 2, 4, 5, 7, 9, 11] },
+  dorian: { name: 'ドリアン', semitones: [0, 2, 3, 5, 7, 9, 10] },
+  mixolydian: { name: 'ミクソリディアン', semitones: [0, 2, 4, 5, 7, 9, 10] },
+  locrian: { name: 'ロクリアン', semitones: [0, 1, 3, 5, 6, 8, 10] }
 };
 
 export const DIATONIC = [
@@ -94,6 +111,10 @@ export function majorScale(root) {
   return MAJOR_SCALE.map((semitones, i) => transpose(root, i, semitones));
 }
 
+export function modeScale(root, modeKey) {
+  return MODES[modeKey].semitones.map((semitones, i) => transpose(root, i, semitones));
+}
+
 export function parseChord(text) {
   const match = /^([A-G](?:#|b)?)(.*)$/.exec(text);
   if (!match || !(match[2] in QUALITIES)) throw new Error(`コード名が読めません: ${text}`);
@@ -119,4 +140,13 @@ export function chordName(chord, notationKey) {
 export function twoFiveOne(keyRoot) {
   const scale = majorScale(keyRoot);
   return [makeChord(scale[1], 'm7'), makeChord(scale[4], '7'), makeChord(scale[0], 'maj7')];
+}
+
+// マイナーキーのツーファイブワン。Vは短調の響きを出すため♭9を足す
+export function minorTwoFiveOne(keyRoot) {
+  return [
+    makeChord(addInterval(keyRoot, 'M2'), 'm7b5'),
+    makeChord(addInterval(keyRoot, 'P5'), '7b9'),
+    makeChord(keyRoot, 'm7')
+  ];
 }
