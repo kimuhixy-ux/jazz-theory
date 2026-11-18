@@ -233,8 +233,23 @@ function renderResult(unit) {
   view.append(result);
 }
 
+// 単元のデータはネットから新しい版を、プログラムは端末に保存した古い版を読むことがあるため、
+// 問題が作れないときは空の画面にせず、新しい版を取りに行って読み直してもらう
+function renderUpdating() {
+  view.append(el('p', 'lead', '新しい版を読み込んでいます。表示が変わらなければ「読み直す」を押してください。'));
+  view.append(button('primary-button', '読み直す', () => location.reload()));
+  navigator.serviceWorker?.getRegistration().then((registration) => registration?.update());
+}
+
 function renderQuiz(unit) {
-  if (!state.quiz || state.quiz.unitId !== unit.id) startQuiz(unit);
+  if (!state.quiz || state.quiz.unitId !== unit.id) {
+    try {
+      startQuiz(unit);
+    } catch {
+      renderUpdating();
+      return;
+    }
+  }
   if (state.quiz.index >= state.quiz.questions.length) renderResult(unit);
   else renderQuestion(unit);
 }
