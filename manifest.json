@@ -1,0 +1,15 @@
+{
+  "name": "ジャズ理論ステップ",
+  "short_name": "ジャズ理論",
+  "description": "ジャズのコード理論を初歩から、読んで・聴いて・答えて覚えるアプリ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f0e8",
+  "theme_color": "#f3f0e8",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
