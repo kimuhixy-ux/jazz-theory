@@ -60,7 +60,11 @@ export const MODES = {
   melodicMinor: { name: 'メロディックマイナー', semitones: [0, 2, 3, 5, 7, 9, 11] },
   altered: { name: 'オルタード', semitones: [0, 1, 3, 4, 6, 8, 10], letters: [0, 1, 2, 2, 3, 5, 6] },
   halfWhole: { name: 'コンビネーション・オブ・ディミニッシュ', semitones: [0, 1, 3, 4, 6, 7, 9, 10], letters: [0, 1, 2, 2, 3, 4, 5, 6] },
-  wholeTone: { name: 'ホールトーン', semitones: [0, 2, 4, 6, 8, 10], letters: [0, 1, 2, 3, 4, 6] }
+  wholeTone: { name: 'ホールトーン', semitones: [0, 2, 4, 6, 8, 10], letters: [0, 1, 2, 3, 4, 6] },
+  bebopDominant: { name: 'ビバップ・ドミナント', semitones: [0, 2, 4, 5, 7, 9, 10, 11], letters: [0, 1, 2, 3, 4, 5, 6, 6] },
+  bebopMajor: { name: 'ビバップ・メジャー', semitones: [0, 2, 4, 5, 7, 8, 9, 11], letters: [0, 1, 2, 3, 4, 4, 5, 6] },
+  majorPentatonic: { name: 'メジャー・ペンタトニック', semitones: [0, 2, 4, 7, 9], letters: [0, 1, 2, 4, 5] },
+  minorPentatonic: { name: 'マイナー・ペンタトニック', semitones: [0, 3, 5, 7, 10], letters: [0, 2, 3, 4, 6] }
 };
 
 export const DIATONIC = [

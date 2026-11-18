@@ -660,9 +660,133 @@ const applyGenerators = {
   }
 };
 
+// アボイドノート：コードの音の半音上にぶつかるスケールの音（clashはぶつかる相手のコードの音の番号）
+const AVOID = {
+  maj7: { mode: 'ionian', avoid: 'P4', clash: 1 },
+  7: { mode: 'mixolydian', avoid: 'P4', clash: 1 },
+  m7b5: { mode: 'locrian', avoid: 'm2', clash: 0 }
+};
+
+// ビバップ・スケールは元のスケールに経過音を1つ足したもの
+const BEBOP = {
+  bebopDominant: { base: 'mixolydian', added: 'M7', quality: '7' },
+  bebopMajor: { base: 'ionian', added: 'A5', quality: 'maj7' }
+};
+
+// コードのルートから見て、どこのメジャー・ペンタトニックを弾くとどの響きになるか
+const PENTA_OVER = [
+  { quality: 'maj7', interval: 'M2', sound: '♯11th' },
+  { quality: '7', interval: 'd5', sound: 'オルタード（♭9th・♯9th・♯11th・♭13th）' }
+];
+
+// ベース音の上にのせる三和音（ベースからの音程）と、全体の響き
+const SLASH = [
+  { interval: 'm7', sound: '9sus4' },
+  { interval: 'M2', sound: 'リディアン（♯11th）' },
+  { interval: 'm3', sound: 'm7' },
+  { interval: 'm2', sound: 'フリジアン（sus4・♭9th）' }
+];
+
+function slashVoicing(roots) {
+  const root = parseNote(pick(roots));
+  const bass = { ...placeRoot(root), octave: placeRoot(root).octave - 1 };
+  const answer = pick(SLASH);
+  const triad = makeChord(addInterval(root, answer.interval), '');
+  const columns = [{ notes: [bass, ...placeAbove(chordNotes(triad), bass)], chord: null }];
+  return { bass, triad, answer, columns, label: `${c(triad)}/${n(bass)}` };
+}
+
+// 密集して積んだ4音（転回形も）と、上から2番目を1オクターブ下げたドロップ2
+function drop2Voicing(roots, qualities) {
+  const chord = randomChord(roots, qualities);
+  const tones = chordNotes(chord);
+  const k = Math.floor(Math.random() * 4);
+  const close = [...tones.slice(k), ...tones.slice(0, k).map((x) => ({ ...x, octave: x.octave + 1 }))];
+  const dropped = { ...close[2], octave: close[2].octave - 1 };
+  return { chord, close, drop: [dropped, close[0], close[1], close[3]] };
+}
+
+const masteryGenerators = {
+  avoidNote({ roots, qualities }) {
+    const chord = randomChord(roots, qualities);
+    const rule = AVOID[chord.quality];
+    const scale = modeScale(chord.root, rule.mode);
+    const answer = addInterval(chord.root, rule.avoid);
+    const clash = chordNotes(chord)[rule.clash];
+    return makeQuestion({
+      prompt: `${c(chord)}（${MODES[rule.mode].name}）で、アボイドノートは？`, correct: n(answer),
+      wrong: distinctWrong([1, 3, 5].map((i) => scale[i]), answer, 2).map(n),
+      explain: `${n(answer)} はコードの音 ${n(clash)} の半音上でぶつかります。長く伸ばさず、経過音として使います。`,
+      columns: [chordColumn(chord), ...scale.map(single)]
+    });
+  },
+  passingTone({ roots, modes }) {
+    const mode = pick(modes);
+    const rule = BEBOP[mode];
+    const chord = makeChord(parseNote(pick(roots)), rule.quality);
+    const answer = addInterval(chord.root, rule.added);
+    const wrong = distinctWrong(['m2', 'm3', 'd5', 'm6', 'M7', 'A5'].map((x) => addInterval(chord.root, x)), answer, 3);
+    return makeQuestion({
+      prompt: `${n(chord.root)} の${MODES[mode].name}で、${MODES[rule.base].name}に足された経過音は？`, correct: n(answer),
+      wrong: wrong.map(n),
+      explain: `${spell(modeScale(chord.root, mode))}。8音にすると、ルートから下りたときコードの音が拍の頭にそろいます。`,
+      columns: [chordColumn(chord), ...modeScale(chord.root, mode).map(single)]
+    });
+  },
+  pentaOver({ roots }) {
+    const entry = pick(PENTA_OVER);
+    const chord = makeChord(parseNote(pick(roots)), entry.quality);
+    const answer = addInterval(chord.root, entry.interval);
+    const penta = modeScale(answer, 'majorPentatonic');
+    return makeQuestion({
+      prompt: `${c(chord)} で ${entry.sound} の響きを出したい。どの音から始まるメジャー・ペンタトニック？`, correct: n(answer),
+      wrong: [chord.root, ...['P4', 'P5'].map((x) => addInterval(chord.root, x))].map(n),
+      explain: `${n(answer)} のメジャー・ペンタトニック：${spell(penta)}。${c(chord)} から見ると ${entry.sound} が入ります。`,
+      columns: [chordColumn(chord), ...penta.map(single)]
+    });
+  },
+  slashSound({ roots }) {
+    const { triad, answer, columns, label } = slashVoicing(roots);
+    return makeQuestion({
+      prompt: `${label}（ベースの上に ${c(triad)} の三和音）。どんな響き？`, correct: answer.sound,
+      wrong: SLASH.filter((x) => x !== answer).map((x) => x.sound),
+      explain: `${spell(columns[0].notes)}。ベースから見ると ${answer.sound} の響きです。`,
+      columns
+    });
+  },
+  slashName({ roots }) {
+    const { bass, triad, answer, columns, label } = slashVoicing(roots);
+    const others = SLASH.filter((x) => x !== answer).map((x) => `${c(makeChord(addInterval(bass, x.interval), ''))}/${n(bass)}`);
+    return makeQuestion({
+      prompt: `${n(bass)} の ${answer.sound} の響きを、スラッシュコードで書くと？`, correct: label, wrong: others,
+      explain: `${c(triad)}（${spell(chordNotes(triad))}）を ${n(bass)} の上にのせます。`,
+      columns
+    });
+  },
+  drop2Bottom({ roots, qualities }) {
+    const { chord, close, drop } = drop2Voicing(roots, qualities);
+    return makeQuestion({
+      prompt: `${c(chord)} を ${spell(close)}（下から）と積んだ。ドロップ2にすると、いちばん下の音は？`, correct: n(drop[0]),
+      wrong: distinctWrong(close, drop[0], 3).map(n),
+      explain: `上から2番目の ${n(drop[0])} を1オクターブ下げて、${spell(drop)}。`,
+      columns: [{ notes: close, chord }, { notes: drop, chord }]
+    });
+  },
+  drop2Ear({ roots, qualities }) {
+    const { chord, close, drop } = drop2Voicing(roots, qualities);
+    const options = { 'クローズ（密集）': close, 'ドロップ2': drop };
+    const [answer, other] = shuffle(Object.keys(options));
+    return makeQuestion({
+      prompt: '聴こえたのは クローズ？ ドロップ2？', correct: answer, wrong: [other],
+      explain: `${c(chord)} の${answer}：${spell(options[answer])}`,
+      columns: [{ notes: options[answer], chord }], ear: true
+    });
+  }
+};
+
 const GENERATORS = {
   ...earGenerators, ...readGenerators, ...stepUpEarGenerators, ...stepUpReadGenerators, ...advancedGenerators, ...developGenerators,
-  ...applyGenerators
+  ...applyGenerators, ...masteryGenerators
 };
 
 // 単元に複数の出題形式があるときは、偏らないよう順番に混ぜてからシャッフルする

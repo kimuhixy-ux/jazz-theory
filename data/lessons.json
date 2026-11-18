@@ -1113,6 +1113,187 @@
       "quiz": [
         { "type": "tensionToScale", "params": { "roots": ["C", "Eb", "F", "G", "Bb"] } }
       ]
+    },
+    {
+      "id": "avoid-notes",
+      "section": "熟達",
+      "title": "アボイドノート",
+      "summary": "スケールの中でも、長く伸ばすとコードとぶつかる音",
+      "cards": [
+        {
+          "title": "半音上でぶつかる音",
+          "text": [
+            "{c:Cmaj7}の上でイオニアン（{n:C4}〜{n:B4}）を弾くとき、{n:F4}を長く伸ばすと濁って聴こえます。",
+            "{n:F4}はコードの3度{n:E4}の半音上（短9度上）にあたるからです。このような音をアボイドノート（避けたい音）と呼びます。"
+          ],
+          "example": { "columns": [{ "notes": ["C4", "E4", "G4", "B4", "F5"], "chord": "Cmaj7" }] }
+        },
+        {
+          "title": "コードごとのアボイド",
+          "text": [
+            "maj7（イオニアン）と 7（ミクソリディアン）では11th（4番目の音）、m7♭5（ロクリアン）では♭9th（2番目の音）がアボイドです。",
+            "m7（ドリアン）にはコードの音と半音でぶつかる音がないので、ほぼすべての音を自由に使えます。"
+          ],
+          "example": { "chords": ["Cmaj7", "C7", "Cm7b5"] }
+        },
+        {
+          "title": "使ってはいけないわけではない",
+          "text": [
+            "アボイドノートも、短く通り過ぎる経過音としてならふつうに使えます。避けるのは、拍の頭で長く伸ばすことです。",
+            "{c:Cmaj7}で♯11thにして{n:F#4}を使うリディアンは、アボイドをなくしたスケールとも言えます。"
+          ],
+          "example": { "seq": ["E4", "F4", "G4", "F#4", "G4"] }
+        }
+      ],
+      "quiz": [
+        { "type": "avoidNote", "params": { "roots": ["C", "D", "F", "G", "Bb"], "qualities": ["maj7", "7", "m7b5"] } }
+      ]
+    },
+    {
+      "id": "bebop-scale",
+      "section": "熟達",
+      "title": "ビバップ・スケール",
+      "summary": "経過音を1つ足した8音のスケールで、コードの音を拍の頭にそろえる",
+      "cards": [
+        {
+          "title": "ミクソリディアン＋長7度",
+          "text": [
+            "{n:C4}ビバップ・ドミナント：{n:C4}・{n:D4}・{n:E4}・{n:F4}・{n:G4}・{n:A4}・{n:Bb4}・{n:B4}。",
+            "ミクソリディアンの{n:Bb4}と{n:C5}の間に、経過音の{n:B4}を足した8音です。"
+          ],
+          "example": { "seq": ["C5", "B4", "Bb4", "A4", "G4", "F4", "E4", "D4", "C4"] }
+        },
+        {
+          "title": "なぜ8音にするのか",
+          "text": [
+            "7音のスケールを8分音符で下りると、コードの音が拍の頭からずれていきます。",
+            "8音にすると、ルートから下りたとき{n:C5}・{n:Bb4}・{n:G4}・{n:E4}のようにコードの音がいつも拍の頭に来ます。チャーリー・パーカーたちのフレーズの秘密です。"
+          ],
+          "example": { "columns": [{ "notes": ["C4", "E4", "G4", "Bb4"], "chord": "C7" }] }
+        },
+        {
+          "title": "ビバップ・メジャー",
+          "text": [
+            "メジャーのコードでは、イオニアンの{n:G4}と{n:A4}の間に♯5の{n:G#4}を足します。",
+            "{n:C4}・{n:D4}・{n:E4}・{n:F4}・{n:G4}・{n:G#4}・{n:A4}・{n:B4}。{c:Cmaj7}や{c:C}で使います。"
+          ],
+          "example": { "seq": ["C5", "B4", "A4", "G#4", "G4", "F4", "E4", "D4", "C4"] }
+        }
+      ],
+      "quiz": [
+        { "type": "modeEar", "params": { "list": ["mixolydian", "bebopDominant"], "quality": "7" } },
+        { "type": "whichScale", "params": { "roots": ["C", "D", "F", "G", "Bb"], "modes": ["mixolydian", "bebopDominant", "halfWhole"], "quality": "7" } },
+        { "type": "passingTone", "params": { "roots": ["C", "Eb", "F", "G", "Bb"], "modes": ["bebopDominant", "bebopMajor"] } }
+      ]
+    },
+    {
+      "id": "pentatonic",
+      "section": "熟達",
+      "title": "ペンタトニックの使い分け",
+      "summary": "5音のスケールを、どの音から弾くかでテンションを選ぶ",
+      "cards": [
+        {
+          "title": "2つのペンタトニック",
+          "text": [
+            "メジャー・ペンタトニック：{n:C4}・{n:D4}・{n:E4}・{n:G4}・{n:A4}。メジャースケールから4番目と7番目を抜いた5音です。",
+            "マイナー・ペンタトニック：{n:C4}・{n:Eb4}・{n:F4}・{n:G4}・{n:Bb4}。ブルースでおなじみの5音です。"
+          ],
+          "example": { "seq": ["C4", "D4", "E4", "G4", "A4", "C5", "Bb4", "G4", "F4", "Eb4", "C4"] }
+        },
+        {
+          "title": "ずらして弾くと ♯11th",
+          "text": [
+            "{c:Cmaj7}の上で、全音上の{n:D4}から始まるメジャー・ペンタトニック（{n:D4}・{n:E4}・{n:F#4}・{n:A4}・{n:B4}）を弾くと、♯11thの{n:F#4}が入ってリディアンの響きになります。",
+            "同じ5音の形のまま、始める音だけでテンションを選べるのがペンタトニックの便利なところです。"
+          ],
+          "example": { "columns": [{ "notes": ["C4", "E4", "G4", "B4"], "chord": "Cmaj7" }, { "notes": ["D5"] }, { "notes": ["E5"] }, { "notes": ["F#5"] }, { "notes": ["A5"] }, { "notes": ["B5"] }] }
+        },
+        {
+          "title": "裏のペンタでオルタード",
+          "text": [
+            "{c:C7}の上で、減5度上の{n:Gb4}から始まるメジャー・ペンタトニック（{n:Gb4}・{n:Ab4}・{n:Bb4}・{n:Db5}・{n:Eb5}）を弾くと、♭9th・♯9th・♯11th・♭13th が入ります。",
+            "オルタード・スケールを丸ごと覚えなくても、5音でオルタードの響きが出せます。"
+          ],
+          "example": { "columns": [{ "notes": ["C4", "E4", "G4", "Bb4"], "chord": "C7" }, { "notes": ["Gb4"] }, { "notes": ["Ab4"] }, { "notes": ["Bb4"] }, { "notes": ["Db5"] }, { "notes": ["Eb5"] }] }
+        }
+      ],
+      "quiz": [
+        { "type": "modeEar", "params": { "list": ["majorPentatonic", "minorPentatonic"], "quality": "7" } },
+        { "type": "whichScale", "params": { "roots": ["C", "D", "F", "G", "A"], "modes": ["majorPentatonic", "minorPentatonic", "mixolydian"], "quality": "7" } },
+        { "type": "pentaOver", "params": { "roots": ["C", "D", "G", "A"] } }
+      ]
+    },
+    {
+      "id": "slash-chords",
+      "section": "熟達",
+      "title": "スラッシュコード",
+      "summary": "ベース音の上に三和音をのせて、テンションの響きを簡単に書く",
+      "cards": [
+        {
+          "title": "分母はベース、分子は三和音",
+          "text": [
+            "{c:Bb}/{n:C3} と書いたら、ベースが{n:C3}、その上で{c:Bb}の三和音（{n:Bb3}・{n:D4}・{n:F4}）を弾きます。",
+            "{n:C3}から見ると 7度・9th・11th。3度のない{c:C7sus4}に9thを足した、9sus4 の響きになります。"
+          ],
+          "example": { "columns": [{ "notes": ["C3", "Bb3", "D4", "F4"], "chord": "Bb" }] }
+        },
+        {
+          "title": "よく使う4つの形",
+          "text": [
+            "ベースの短7度上の三和音 → 9sus4。全音上 → リディアン（♯11th）。短3度上 → m7。",
+            "半音上 → フリジアン（sus4・♭9th）。ハービー・ハンコックの「処女航海」などで聴ける響きです。"
+          ],
+          "example": { "columns": [{ "notes": ["C3", "D4", "F#4", "A4"], "chord": "D" }, { "notes": ["C3", "Db4", "F4", "Ab4"], "chord": "Db" }] }
+        },
+        {
+          "title": "なぜ便利か",
+          "text": [
+            "9sus4 や (♭9)sus4 のような長い名前より、三和音とベースで書くほうが、すぐ弾けて響きも想像しやすくなります。",
+            "ピアノは右手で三和音、左手でベース。サックスなら三和音の音を並べるだけでテンションの効いたフレーズになります。"
+          ],
+          "example": { "columns": [{ "notes": ["C3", "Eb4", "G4", "Bb4"], "chord": "Eb" }] }
+        }
+      ],
+      "quiz": [
+        { "type": "slashSound", "params": { "roots": ["C", "D", "F", "G"] } },
+        { "type": "slashName", "params": { "roots": ["C", "D", "F", "G"] } }
+      ]
+    },
+    {
+      "id": "drop2",
+      "section": "熟達",
+      "title": "ドロップ2・ヴォイシング",
+      "summary": "上から2番目の音を1オクターブ下げて、広がりのある和音にする",
+      "cards": [
+        {
+          "title": "クローズとドロップ2",
+          "text": [
+            "{n:C4}・{n:E4}・{n:G4}・{n:B4}のように、音をすき間なく積んだ形をクローズ（密集）と呼びます。",
+            "上から2番目の{n:G4}を1オクターブ下げると、{n:G3}・{n:C4}・{n:E4}・{n:B4}。これがドロップ2です。"
+          ],
+          "example": { "columns": [{ "notes": ["C4", "E4", "G4", "B4"], "chord": "Cmaj7" }, { "notes": ["G3", "C4", "E4", "B4"], "chord": "Cmaj7" }] }
+        },
+        {
+          "title": "なぜ下げるのか",
+          "text": [
+            "クローズは音が詰まって、少しこもった響きになります。ドロップ2は音の間が広がり、明るく開いた響きになります。",
+            "ギターで押さえやすく、サックス・セクションの4声のハーモニーでもいちばんよく使う形です。"
+          ],
+          "example": { "columns": [{ "notes": ["F4", "A4", "C5", "E5"], "chord": "Dm7" }, { "notes": ["C4", "F4", "A4", "E5"], "chord": "Dm7" }] }
+        },
+        {
+          "title": "転回形にも使える",
+          "text": [
+            "{n:E4}・{n:G4}・{n:B4}・{n:C5}（転回形）なら、上から2番目の{n:B4}を下げて{n:B3}・{n:E4}・{n:G4}・{n:C5}。",
+            "4つの転回形それぞれにドロップ2があるので、メロディの音に合わせて一番上の音を選べます。"
+          ],
+          "example": { "columns": [{ "notes": ["E4", "G4", "B4", "C5"], "chord": "Cmaj7" }, { "notes": ["B3", "E4", "G4", "C5"], "chord": "Cmaj7" }] }
+        }
+      ],
+      "quiz": [
+        { "type": "drop2Bottom", "params": { "roots": ["C", "D", "F", "G", "Bb"], "qualities": ["maj7", "m7", "7"] } },
+        { "type": "drop2Ear", "params": { "roots": ["C", "D", "F", "G", "Bb"], "qualities": ["maj7", "m7", "7"] } }
+      ]
     }
   ]
 }
