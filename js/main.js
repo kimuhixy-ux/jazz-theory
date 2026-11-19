@@ -250,9 +250,16 @@ function renderResult(unit) {
   const quiz = state.quiz;
   const result = el('div', 'result');
   result.append(el('p', 'result-score', `${quiz.questions.length}問中 ${quiz.score}問 正解`));
-  result.append(el('p', '', quiz.score >= 8 ? 'よくできました。次の単元へ進みましょう。' : '「読む」を見直してから、もう一度挑戦してみましょう。'));
-  result.append(button('primary-button', 'もう一度', () => { startQuiz(unit); render(false); }));
-  result.append(daily251Links(unit));
+  // 8点以上は理解できたとみなして楽器で吹く方へ、7点以下は読み直す方へ、次の一歩を1つに絞ってすすめる
+  const passed = quiz.score >= 8;
+  const canPlay = passed && (unit.daily251 || []).length > 0;
+  let message = '「読む」を見直してから、もう一度挑戦してみましょう。';
+  if (canPlay) message = '吹く準備ができました。Daily251で、今日のキーで吹いてみましょう。';
+  else if (passed) message = 'よくできました。次の単元へ進みましょう。';
+  result.append(el('p', '', message));
+  if (canPlay) result.append(daily251Links(unit));
+  if (!passed) result.append(button('primary-button', '「読む」を見直す', () => { location.hash = `#/${unit.id}`; }));
+  result.append(button(passed ? 'primary-button' : 'secondary-button', 'もう一度', () => { startQuiz(unit); render(false); }));
   result.append(button('secondary-button', '一覧へ戻る', () => { location.hash = ''; }));
   view.append(result);
 }
