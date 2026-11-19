@@ -276,6 +276,7 @@
       "id": "two-five",
       "title": "ツーファイブワン",
       "summary": "IIm7 → V7 → Imaj7。ジャズでいちばんよく出る進行",
+      "daily251": [{ "cat": "major251", "label": "1001major251" }, { "cat": "ai_major251", "label": "AI-major251" }],
       "cards": [
         {
           "title": "ジャズでいちばんよく出る進行",
@@ -304,8 +305,7 @@
           "title": "吹いて確かめる",
           "text": [
             "Daily251のフレーズは、この進行の上で吹く練習です。どの音がどのコードの何度なのかを意識しながら吹いてみましょう。"
-          ],
-          "link": { "label": "Daily251を開く", "url": "https://kimuhixy.com/daily-251-sax/" }
+          ]
         }
       ],
       "quiz": [
@@ -317,6 +317,7 @@
       "id": "guide-tones",
       "title": "ガイドトーン",
       "summary": "3度と7度をつなぐと、進行がなめらかなメロディになる",
+      "daily251": [{ "cat": "diatonic", "label": "ダイアトニック/ボイスリーディング", "mode": "major" }],
       "cards": [
         {
           "title": "3度と7度がコードの顔",
@@ -395,6 +396,7 @@
       "section": "ステップアップ",
       "title": "マイナーのツーファイブワン",
       "summary": "IIm7♭5 → V7(♭9) → Im7。切ない響きの定番進行",
+      "daily251": [{ "cat": "minor251", "label": "1001minor251" }, { "cat": "jamey_minor251", "label": "ジェイミーマイナー251" }],
       "cards": [
         {
           "title": "マイナーキーのツーファイブワン",
@@ -431,6 +433,7 @@
       "section": "ステップアップ",
       "title": "セカンダリードミナント",
       "summary": "キーの中のどのコードにも、向かっていく7のコードを置ける",
+      "daily251": [{ "cat": "major2516", "label": "1001major2516" }],
       "cards": [
         {
           "title": "どのコードにもドミナントを付けられる",
@@ -466,6 +469,7 @@
       "section": "ステップアップ",
       "title": "裏コード",
       "summary": "V7を半音6つ離れた7のコードに置きかえる",
+      "daily251": [{ "cat": "turnaround", "label": "循環コード（裏コード）", "mode": "tritone" }],
       "cards": [
         {
           "title": "トライトーン（三全音）",
@@ -501,6 +505,7 @@
       "section": "ステップアップ",
       "title": "ブルース進行",
       "summary": "12小節でひと回り。ジャズでいちばん演奏される形",
+      "daily251": [{ "cat": "blues", "label": "ブルース", "mode": "major" }, { "cat": "nows_the_time", "label": "Now's the Time" }],
       "cards": [
         {
           "title": "12小節のブルース",
@@ -538,6 +543,7 @@
       "section": "ステップアップ",
       "title": "コードとスケール",
       "summary": "コードごとに吹く音の並び（モード）を選ぶ",
+      "daily251": [{ "cat": "dorian", "label": "1001Dorian" }, { "cat": "ai_dorian", "label": "AI-Dorian" }],
       "cards": [
         {
           "title": "コードからスケールを選ぶ",
@@ -647,6 +653,7 @@
       "section": "上級",
       "title": "ツーファイブの連鎖",
       "summary": "どの7のコードにもIIm7を組ませて、つなげていく",
+      "daily251": [{ "cat": "major1625", "label": "1001major1625" }, { "cat": "turnaround", "label": "循環コード", "mode": "basic" }],
       "cards": [
         {
           "title": "リレイテッドII",
@@ -683,6 +690,7 @@
       "section": "上級",
       "title": "オルタード・テンション",
       "summary": "7のコードだけが使える、半音ずらしたテンション",
+      "daily251": [{ "cat": "jamey_v79", "label": "ジェイミーV7+9" }, { "cat": "dominant7th", "label": "1001Dominant7th" }],
       "cards": [
         {
           "title": "ドミナントだけの変化音",
@@ -719,6 +727,7 @@
       "section": "上級",
       "title": "コルトレーン・チェンジ",
       "summary": "長3度ずつ、短い間に次々と転調する進行",
+      "daily251": [{ "cat": "coltrane", "label": "コルトレーンチェンジ" }, { "cat": "coltrane1001", "label": "1001coltrane" }],
       "cards": [
         {
           "title": "長3度でオクターブを3等分",
@@ -1154,6 +1163,7 @@
       "section": "熟達",
       "title": "ビバップ・スケール",
       "summary": "経過音を1つ足した8音のスケールで、コードの音を拍の頭にそろえる",
+      "daily251": [{ "cat": "bebop", "label": "ビバップ" }, { "cat": "bebap_progression", "label": "Bebap-progression" }],
       "cards": [
         {
           "title": "ミクソリディアン＋長7度",
@@ -1552,6 +1562,7 @@
       "section": "奥義",
       "title": "エンクロージャー",
       "summary": "狙った音を上と下からはさんで、強く聴かせるビバップの技",
+      "daily251": [{ "cat": "approach_enclosure", "label": "アプローチ&エンクロージャー" }, { "cat": "ai_approach_enclosure", "label": "AI-アプローチ&エンクロージャー" }],
       "cards": [
         {
           "title": "上と下からはさむ",
@@ -1840,6 +1851,7 @@
       "section": "実践",
       "title": "曲で使う：枯葉型の進行",
       "summary": "メジャーとマイナーのツーファイブが続く8小節に、技を当てはめる",
+      "daily251": [{ "cat": "autumn_leaves_cannonball", "label": "Autumn Leaves Solo Cannonball" }, { "cat": "minor251", "label": "1001minor251" }],
       "cards": [
         {
           "title": "進行の形",
@@ -1887,6 +1899,7 @@
       "section": "実践",
       "title": "曲で使う：循環進行",
       "summary": "I-VI-II-V とサビのドミナントの連鎖で、セカンダリーと裏コードを使う",
+      "daily251": [{ "cat": "turnaround", "label": "循環コード", "mode": "basic" }, { "cat": "major1625", "label": "1001major1625" }],
       "cards": [
         {
           "title": "Aの部分",
@@ -1933,6 +1946,7 @@
       "section": "実践",
       "title": "曲で使う：マイナー・ブルース",
       "summary": "Im7 と IVm7 を中心にした12小節で、スケールとガイドトーンを選ぶ",
+      "daily251": [{ "cat": "blues", "label": "ブルース（マイナー）", "mode": "minor" }],
       "cards": [
         {
           "title": "12小節の形",

@@ -154,8 +154,31 @@ function renderUnitHeader(unit, tab) {
   view.append(header, tabs);
 }
 
+// 公開先ごとに同じ側のDaily251へつなぐ（kimuhixy.com同士、GitHub Pages同士）
+const DAILY251_URL = location.hostname === 'kimuhixy.com'
+  ? 'https://kimuhixy.com/daily-251-sax/'
+  : 'https://kimuhixy-ux.github.io/daily-251-sax-iphone/';
+
+// 単元に合うDaily251のカテゴリーを選んだ状態で開くボタン。キーはDaily251の「今日のキー」に任せる
+function daily251Links(unit) {
+  const box = el('div', 'daily251-links');
+  for (const target of unit.daily251 || []) {
+    const params = new URLSearchParams({ cat: target.cat });
+    if (target.mode) params.set('mode', target.mode);
+    // 実音はDaily251では「楽器の指定なし」にあたるので、そのときは渡さず前回の設定に任せる
+    if (state.notation !== 'concert') params.set('inst', state.notation);
+    const link = el('a', 'link-button', `Daily251で吹く：${target.label}`);
+    link.href = `${DAILY251_URL}?${params}`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    box.append(link);
+  }
+  return box;
+}
+
 function renderRead(unit) {
   unit.cards.forEach((card) => view.append(renderCard(card)));
+  view.append(daily251Links(unit));
   view.append(button('primary-button', '練習へ進む', () => { location.hash = `#/${unit.id}/quiz`; }));
 }
 
@@ -229,6 +252,7 @@ function renderResult(unit) {
   result.append(el('p', 'result-score', `${quiz.questions.length}問中 ${quiz.score}問 正解`));
   result.append(el('p', '', quiz.score >= 8 ? 'よくできました。次の単元へ進みましょう。' : '「読む」を見直してから、もう一度挑戦してみましょう。'));
   result.append(button('primary-button', 'もう一度', () => { startQuiz(unit); render(false); }));
+  result.append(daily251Links(unit));
   result.append(button('secondary-button', '一覧へ戻る', () => { location.hash = ''; }));
   view.append(result);
 }
