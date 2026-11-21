@@ -321,11 +321,14 @@ const stepUpReadGenerators = {
     const bar = Math.floor(Math.random() * 10);
     const roman = BLUES_FORM[bar][0];
     const wrongRomans = shuffle(Object.keys(BLUES_ROMANS).filter((x) => x !== roman)).slice(0, 3);
-    const row = BLUES_FORM.slice(Math.floor(bar / 4) * 4, Math.floor(bar / 4) * 4 + 4).flat();
+    const start = Math.floor(bar / 4) * 4;
+    // 11・12小節目は1小節に2つのコードが入るので、小節ごとに区切って書き、譜例のコードの数と合わせる
+    const bars = BLUES_FORM.slice(start, start + 4).map((group) => group.map((x) => c(bluesChord(root, x))).join(' ')).join('｜');
+    const row = BLUES_FORM.slice(start, start + 4).flat();
     return makeQuestion({
       prompt: `キー${n(root)} のジャズブルースで、${bar + 1}小節目のコードは？`, correct: c(bluesChord(root, roman)),
       wrong: wrongRomans.map((x) => c(bluesChord(root, x))),
-      explain: `${bar + 1}小節目は ${roman}。譜例は${Math.floor(bar / 4) * 4 + 1}〜${Math.floor(bar / 4) * 4 + 4}小節目です。`,
+      explain: `${bar + 1}小節目は ${roman}。譜例は${start + 1}〜${start + 4}小節目：${bars}`,
       columns: row.map((x) => chordColumn(bluesChord(root, x)))
     });
   },
