@@ -4,6 +4,7 @@ import { unlockAudio, playColumns, playLine, stopLine } from './audio.js';
 import { buildQuiz } from './quiz.js';
 
 const STORAGE_KEY = 'jazz-theory';
+const RECENT_KEY = 'jazz-theory-recent';
 const QUIZ_LENGTH = 10;
 const TOKEN = /\{([nc]):([^}]+)\}/g;
 
@@ -427,7 +428,17 @@ function daily251Links(unit) {
   return box;
 }
 
+// Daily251は同じサイトに置いてあり端末の保存場所を共有できるので、最後に開いた単元を残して「前回の理論」として出してもらう
+function rememberUnit(unit) {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify({ id: unit.id, title: unit.title, daily251: unit.daily251 ?? [] }));
+  } catch {
+    // 保存できなくてもこのアプリの学習には影響しないので無視する
+  }
+}
+
 function renderRead(unit) {
+  rememberUnit(unit);
   unit.cards.forEach((card) => view.append(renderCard(card)));
   view.append(daily251Links(unit));
   view.append(button('primary-button', '練習へ進む', () => { location.hash = `#/${unit.id}/quiz`; }));
@@ -524,6 +535,7 @@ function renderUpdating() {
 }
 
 function renderQuiz(unit) {
+  rememberUnit(unit);
   if (!state.quiz || state.quiz.unitId !== unit.id) {
     try {
       startQuiz(unit);
